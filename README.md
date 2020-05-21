@@ -4,9 +4,9 @@ We make hyper connection games.
 ## install
 > go get -u github.com/gogoma/teamgoing
 
-## need vendor install 1
+## need module install 1
 > go get -u github.com/googollee/go-socket.io
-## need vendor install 2
+## need module install 2
 > go get -u github.com/google/uuid
 
 ## use
