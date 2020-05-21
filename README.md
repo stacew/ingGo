@@ -2,11 +2,11 @@
 We make hyper connection games.
 
 ## install
-$ go get -u github.com/gogoma/teamgoing
+> go get -u github.com/gogoma/teamgoing
 
 ## need vendor install
-$ go get -u github.com/googollee/go-socket.io
-$ go get -u github.com/google/uuid
+> go get -u github.com/googollee/go-socket.io
+> go get -u github.com/google/uuid
 
 ## use
 debug main.go
