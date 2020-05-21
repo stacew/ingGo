@@ -2,10 +2,10 @@ package ssocketmaker
 
 import (
 	"errors"
+	"gogoma/teamgoing/smygame"
 	"log"
 	"strconv"
 
-	"github.com/gogoma/teamgoing/smygame"
 	socketio "github.com/googollee/go-socket.io"
 )
 

@@ -1,11 +1,11 @@
 package main
 
 import (
+	"gogoma/teamgoing/ssocketmaker"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/gogoma/teamgoing/ssocketmaker"
 	socketio "github.com/googollee/go-socket.io"
 )
 
