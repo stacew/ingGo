@@ -1,0 +1,123 @@
+.centerWrapper{
+    display: flex;
+    justify-content: center;    
+    align-items: center;
+    
+    position: fixed;
+    width: 100%;
+    top:6%
+}
+
+.btnClass{
+    position: fixed;
+    top:40%;
+
+    z-index: 3;
+    outline: none;
+    border-radius: 2%;
+    padding: 1vw 5vw;
+    padding: calc(min(1vh,1vw)) calc(min(5vh,5vw));
+    font-size: 4vw;
+    font-size: calc(min(5vh,5vw));
+
+    animation: float 1s ease-in infinite;  
+    animation-delay: 0.5s;   
+}
+#joinBtn{
+    display: none;
+}
+#leaveBtn{
+    top :5%;
+    display: none;
+}
+
+@keyframes float{
+    0%{     transform: translateY(calc(min(0vh,0vw)));}
+    50%{    transform: translateY(calc(min(2vh,2vw)));}
+    100%{   transform: translateY(calc(min(0vh,0vw)));}
+}
+#bgCanvas{
+    background-color:burlywood;
+    border-radius: 1%;
+}
+#fgCancas{
+    z-index: 2;
+}
+.canvasClass{
+    position: fixed;
+    top:6%
+}
+
+.canvasClass {    
+    height: 264px; 
+    width: 264px;
+    height: calc(min(88vh,88vw));
+    width: calc(min(88vh,88vw));
+}
+
+/* IE랑 Edge는 calc(min())이 안돼서 미디어쿼리 남발...*/
+@media screen and (min-width:400px) and (min-height:400px){
+    .canvasClass{
+        height: 352px; 
+        width: 352px;
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
+@media screen and (min-width:500px) and (min-height:500px){
+    .canvasClass{
+        height: 440px; 
+        width: 440px;
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
+@media screen and (min-width:600px) and (min-height:600px){
+    .canvasClass{
+        height: 528px; 
+        width: 528px;
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
+@media screen and (min-width:700px) and (min-height:700px){
+    .canvasClass{
+        height: 616px; 
+        width: 616px;
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
+@media screen and (min-width:800px) and (min-height:800px){
+    .canvasClass{  
+        height: 704px; 
+        width: 704px;
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
+@media screen and (min-width:900px) and (min-height:900px){
+    .canvasClass{
+        height: 792px; 
+        width: 792px;
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
+@media screen and (min-width:1000px) and (min-height:1000px){
+    .canvasClass{
+        height: 880px; 
+        width: 880px;
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
+
+@media screen and (min-width:1200px) and (min-height:1200px){
+    .canvasClass{
+        height: 1056px; 
+        width: 1056px; 
+        height: calc(min(88vh,88vw));
+        width: calc(min(88vh,88vw));
+    }
+}
