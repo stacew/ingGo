@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/stacew/teamgoing",
+	"ImportPath": "github.com/gogoma/teamgoing",
 	"GoVersion": "go1.14",
 	"GodepVersion": "v80",
 	"Packages": [
