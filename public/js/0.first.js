@@ -2,6 +2,11 @@
 //All flow of the game is controlled by the server.
 //So if you change this, it's just an optical illusion effect.
 //G.G.
+document.addEventListener("contextmenu", handleContextualMenu);
+function handleContextualMenu(event) {
+    event.preventDefault();
+}
+
 let imgBlack = new Image();
 imgBlack.src = "/asset/black.png"
 let imgWhite = new Image();
@@ -36,22 +41,27 @@ function fDrawBoard() {
 }
 fDrawBoard();
 
-document.addEventListener("contextmenu", handleContextualMenu);
-function handleContextualMenu(event) {
-    event.preventDefault();
+const canvas = document.getElementById("fgCanvas");
+function fGetClickPos(e) {
+    let rect = canvas.getBoundingClientRect();
+    return [e.layerX / rect.width * canvas.width, e.layerY / rect.height * canvas.height];
 }
 
-const canvas = document.getElementById("fgCanvas");
 const ctx = canvas.getContext("2d");
 const connectBtn = document.getElementById("connectBtn");
 const joinBtn = document.getElementById("joinBtn");
 const LeaveBtn = document.getElementById("leaveBtn");
-
-
 const test2 = document.getElementById("test2");
 
-let zbShot = false;
+//render attack color
+let zbAttackTeamBlack = true;
+//for click arrow
 let zbLive = false;
+let zbShot = false;
+let znMyX = 0;
+let znMyY = 0;
+
+
 
 
 

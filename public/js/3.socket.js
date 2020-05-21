@@ -38,16 +38,13 @@ sio.on('sOver', function (msg) {
 sio.on('sGame', function (msg) {
     fMsgDecoder(msg);
 });
-function fGetClickPos(e) {
-    let rect = canvas.getBoundingClientRect();
-    return [e.layerX / rect.width * canvas.width, e.layerY / rect.height * canvas.height];
-}
+
 function clickCanvas(e) {
     if (zbShot == false || zbLive == false)
         return;
     zbShot = false;
     multi = fGetClickPos(e);
-    fDrawCircle([multi[0], multi[1], 40]);
-    sio.emit('cShot', parseInt(multi[0]).toString(10) + "," + parseInt(multi[1]).toString());
+    fDrawArrowLine(znMyX, znMyY, multi[0], multi[1], "sienna");
+    sio.emit('cShot', parseInt(multi[0]).toString() + "," + parseInt(multi[1]).toString());
 }
 canvas.addEventListener("click", clickCanvas, false);

@@ -90,8 +90,9 @@ type GameRoomInfo struct {
 	roomCapacity int
 	randPos      []xy
 
-	playerMap map[string]*playerInfo //key = c.ID()
-	bShotTime bool
+	playerMap        map[string]*playerInfo //key = c.ID()
+	bShotTime        bool
+	bAttackTeamBlack bool
 }
 
 //GetPlayerCount is
@@ -118,7 +119,7 @@ func (m *GameRoomInfo) playerStartUp() {
 	for _, player := range m.playerMap {
 		(*player).pos.x = float64(m.randPos[i].x)
 		(*player).pos.y = float64(m.randPos[i].y)
-		(*player).nRadius = 40
+		(*player).nRadius = 30
 		i++
 		if i%2 == 0 {
 			player.bwTeam = "b"
@@ -141,18 +142,6 @@ func (m *GameRoomInfo) BroadcastInfoRoom() {
 
 	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
 }
-func (m *GameRoomInfo) broadcastStarting() {
-	var msg string
-	for cID, playerInfo := range m.playerMap {
-		msg = msg + ".s" + //.s : start
-			cID + "," +
-			strconv.Itoa(int(playerInfo.pos.x)) + "," +
-			strconv.Itoa(int(playerInfo.pos.y)) + "," +
-			strconv.Itoa(playerInfo.nRadius) + "," +
-			playerInfo.bwTeam + ","
-	}
-	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
-}
 func (m *GameRoomInfo) broadcastOneShotStartEnd(start bool) {
 	msg := ".o" //.o : oneShotStartEnd
 	if start {
@@ -168,8 +157,18 @@ func (m *GameRoomInfo) broadcastClientTimer(nTime int) {
 
 	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
 }
-func (m *GameRoomInfo) broadcastPlaying() {
+func (m *GameRoomInfo) broadcastPlaying(starting bool) {
 	var msg string
+	if starting {
+		msg = ".s" //.s: Starting
+	}
+	msg = msg + ".a" //.a : attackTeam
+	if m.bAttackTeamBlack {
+		msg = msg + "b,"
+	} else {
+		msg = msg + "w,"
+	}
+
 	for cID, playerInfo := range m.playerMap {
 		if playerInfo.bLive == false {
 			msg = msg + ".d" + //.d : die
@@ -191,20 +190,23 @@ func (m *GameRoomInfo) broadcastPlaying() {
 //Start is goroutine
 func (m *GameRoomInfo) Start() {
 
+	m.bAttackTeamBlack = true
 	m.playerStartUp()
-	m.broadcastStarting()
+
+	m.broadcastPlaying(true) //true = starting
 
 	for {
-		bGameOver, nLivePlayerCount := m.checkGameOver()
+		bGameOver := m.checkGameOver()
 		if bGameOver {
-			break //todo 방 종료 후 승리 화면 보내야 됨.
+			m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sOver") //client js bLive 상태면 win임.
 			//게임 & 소켓 룸 제거는 disconnect, leave 호출되면 사라짐.
+			break
 		}
 
 		//입력 받는 슬립 구간
 		m.bShotTime = true
 		m.broadcastOneShotStartEnd(true)
-		nTimeCount := 2 + nLivePlayerCount //사람 수 적어지면 시간 짧아짐.
+		nTimeCount := 5 //그냥 입력 시간 5초?
 		for i := nTimeCount; i >= 0; i-- {
 			m.broadcastClientTimer(i) //초당 메시지 한 번 씩 전송
 			time.Sleep(time.Second)
@@ -215,16 +217,20 @@ func (m *GameRoomInfo) Start() {
 		nPlayingTime := 1
 		m.setShotInfo(nFrame, nPlayingTime) //사용자 shot 입력 -> player speed 세팅
 		m.playing(nFrame, nPlayingTime)     //게임 진행 및 플레이
+
+		m.growing() //캐릭터 성장
+
+		m.bAttackTeamBlack = !m.bAttackTeamBlack //턴 변경
 	}
 
 }
 
 func (m *GameRoomInfo) physicsCollision() {
-	for _, p1 := range m.playerMap {
+	for _, p1 := range m.playerMap { //black
 		if p1.bLive == false || p1.bwTeam == "w" {
 			continue
 		}
-		for _, p2 := range m.playerMap {
+		for _, p2 := range m.playerMap { //white
 			if p1 == p2 || p2.bwTeam == "b" || p2.bLive == false {
 				continue
 			}
@@ -236,8 +242,11 @@ func (m *GameRoomInfo) physicsCollision() {
 				continue
 			}
 
-			p1.nRadius = p1.nRadius + 20
-			p2.bLive = false
+			if m.bAttackTeamBlack {
+				p2.bLive = false
+			} else {
+				p1.bLive = false
+			}
 		}
 	}
 }
@@ -258,17 +267,28 @@ func (m *GameRoomInfo) playerSpeedInit() {
 		playerInfo.speed.x = 0
 		playerInfo.speed.y = 0
 	}
+
 }
+
 func (m *GameRoomInfo) playing(nFrame, nPlayingTime int) {
 	loopCnt := nPlayingTime * 1000 / nFrame
 	for i := 0; i < loopCnt; i++ {
 		m.physicsMove()
 		m.physicsCollision()
-		m.broadcastPlaying()
+		m.broadcastPlaying(false)
 
 		time.Sleep(time.Duration(nFrame) * time.Millisecond)
 	}
 	m.playerSpeedInit()
+}
+func (m *GameRoomInfo) growing() {
+	for _, playerInfo := range m.playerMap {
+		if playerInfo.bLive == false {
+			continue
+		}
+		playerInfo.nRadius += 10
+	}
+	m.broadcastPlaying(false)
 }
 func (m *GameRoomInfo) setShotInfo(nFrame, nPlayingTime int) {
 	loopCnt := nPlayingTime * 1000 / nFrame
@@ -293,7 +313,7 @@ func (m *GameRoomInfo) setShotInfo(nFrame, nPlayingTime int) {
 	}
 }
 
-func (m *GameRoomInfo) checkGameOver() (bool, int) {
+func (m *GameRoomInfo) checkGameOver() bool {
 	bTeam := false
 	wTeam := false
 	nLiveCount := 0
@@ -311,10 +331,7 @@ func (m *GameRoomInfo) checkGameOver() (bool, int) {
 	}
 
 	bGameOver := bTeam == false || wTeam == false
-	if bGameOver {
-		m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sOver")
-	}
-	return bGameOver, nLiveCount
+	return bGameOver
 }
 
 //CShot is

@@ -15,8 +15,12 @@ function fMsgDecoder(msg) {
                 nFindIndex = fInfoRoom(msg, nFindIndex + 1);
                 break;
             case "s":
-                nFindIndex = fStarting(msg, nFindIndex + 1);
                 zbLive = true;
+                nFindIndex = nFindIndex + 2;
+                break;
+            case "p":
+                if (bNeedCanvasClear) { fClearCanvas(); bNeedCanvasClear = false; }
+                nFindIndex = fPlaying(msg, nFindIndex + 1);
                 break;
             case "o":
                 nFindIndex = fOneshotStartEnd(msg, nFindIndex + 1);
@@ -27,11 +31,11 @@ function fMsgDecoder(msg) {
             case "d":
                 nFindIndex = fDieMessage(msg, nFindIndex + 1);
                 break;
-            case "p":
-                if (bNeedCanvasClear) { fClearCanvas(); bNeedCanvasClear = false; }
-                nFindIndex = fPlaying(msg, nFindIndex + 1);
+            case "a":
+                nFindIndex = fAttackTeamTurn(msg, nFindIndex + 1);
                 break;
             default:
+                console.log(charType); //decoder infinite loop checker
                 break;
         }
     }
