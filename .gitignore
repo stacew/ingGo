@@ -12,11 +12,8 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
 
-
-# heroku
 .vscode/
-.db
-.csv
+*.db
+*.csv
 __debug_bin
