@@ -1,44 +1,23 @@
 package main
 
 import (
-	"gogoma/teamgoing/ssocketmaker"
 	"log"
 	"net/http"
-	"os"
-
-	socketio "github.com/googollee/go-socket.io"
+	myapp "stacew/teamgoing/myApp"
+	"stacew/teamgoing/port"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("main()...")
-
 	// log.Println(runtime.GOMAXPROCS(1))
 	// log.Println(runtime.GOMAXPROCS(1))
+	appHandler := myapp.MakeNewHandler()
+	defer appHandler.Close()
+	appHandler.Start()
 
-	socketioServer, err := socketio.NewServer(nil)
-	defer socketioServer.Close()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	var socketServerInfo ssocketmaker.SocketServerInfo
-	socketServerInfo.NewGameServerAndMakeSocketHandler(socketioServer)
-	go socketioServer.Serve()
-
-	http.Handle("/socket.io/", socketioServer)              //Socket
-	http.Handle("/", http.FileServer(http.Dir("./public"))) //file Server
-	log.Println("ListenAndServe()...")
-	log.Fatal(http.ListenAndServe(":"+GetPort(), nil)) //http start
-}
-
-//GetPort is
-func GetPort() string {
-	port := os.Getenv("PORT") //env port
-	if port == "" {
-		port = "8080" //local
-	}
-	log.Print("port:" + port)
-	return port
+	port := port.GetPort()
+	log.Println("**************** ListenAndServe():" + port)
+	log.Fatal(http.ListenAndServe(":"+port, appHandler)) //http start
 }
 
 //-ser //////////////////////////////

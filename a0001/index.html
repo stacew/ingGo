@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamGoing.io</title>
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/canvas.css">
+</head>
+
+<body>
+    <div class="topBottomWrapper menuWrapper">
+        <span id="top1">test1</span>
+        <span id="top2">test2</span>
+        <span id="top3">test3</span>
+    </div>
+
+    <div class="centerWrapper">
+        <canvas class="canvasClass" id="bgCanvas" width="1000" height="1000"></canvas>
+        <canvas class="canvasClass" id="msgCanvas" width="1000" height="1000"></canvas>
+        <canvas class="canvasClass" id="fgCanvas" width="1000" height="1000"></canvas>
+        <button class="btnClass" id="connectBtn">Connect Server</button>
+        <button class="btnClass" id="joinBtn">Join</button>
+        <button class="btnClass" id="leaveBtn">Leave</button>
+    </div>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="/game/js/0.base.js"></script>
+    <script src="/game/js/1.render.js"></script>
+    <script src="/game/js/2.decoder.js"></script>
+    <script src="/game/js/3.socket.js"></script>
+
+    <div class="topBottomWrapper">
+        <span id="bottom1">test1</span>
+        <span id="bottom2">test2</span>
+        <span id="bottom3">test3</span>
+    </div>
+
+</body>
+
+</html>

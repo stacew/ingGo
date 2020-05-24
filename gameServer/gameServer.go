@@ -1,7 +1,8 @@
-package smygame
+package gameserver
 
 import (
 	"errors"
+	gameroom "stacew/teamgoing/gameRoom"
 
 	socketio "github.com/googollee/go-socket.io"
 )
@@ -32,7 +33,7 @@ func (m *MyGameServer) BroadCastJoinAndStart(conID string) {
 	go gameRoomInfo.Start()
 }
 
-func (m *MyGameServer) joinProcess(conID string, gameRoomInfo *GameRoomInfo) string {
+func (m *MyGameServer) joinProcess(conID string, gameRoomInfo *gameroom.GameRoomInfo) string {
 	roomName := gameRoomInfo.Join(conID)
 	m.conGameRoomMap[conID] = gameRoomInfo
 	return roomName
@@ -52,7 +53,7 @@ func (m *MyGameServer) CJoin(conID string) (string, error) {
 	}
 
 	//matchRoom이 없으면 새로 만든다.
-	gameRoomInfo := NewGameRoomInfo(m.socketioServer, m.nsp, nRoomCapacity)
+	gameRoomInfo := gameroom.NewGameRoomInfo(m.socketioServer, m.nsp, nRoomCapacity)
 	gameRoomName := m.joinProcess(conID, gameRoomInfo)
 	m.matchRoom[gameRoomInfo] = gameRoomName
 
@@ -84,9 +85,9 @@ func NewGameServer(socketioServer *socketio.Server, nsp string) *MyGameServer {
 		socketioServer: socketioServer,
 		nsp:            nsp,
 
-		matchRoom:      make(map[*GameRoomInfo]string),
-		playRoom:       make(map[*GameRoomInfo]string),
-		conGameRoomMap: make(map[string]*GameRoomInfo)}
+		matchRoom:      make(map[*gameroom.GameRoomInfo]string),
+		playRoom:       make(map[*gameroom.GameRoomInfo]string),
+		conGameRoomMap: make(map[string]*gameroom.GameRoomInfo)}
 
 	return gameserver
 }
@@ -96,7 +97,7 @@ type MyGameServer struct {
 	socketioServer *socketio.Server
 	nsp            string
 
-	matchRoom      map[*GameRoomInfo]string
-	playRoom       map[*GameRoomInfo]string
-	conGameRoomMap map[string]*GameRoomInfo
+	matchRoom      map[*gameroom.GameRoomInfo]string
+	playRoom       map[*gameroom.GameRoomInfo]string
+	conGameRoomMap map[string]*gameroom.GameRoomInfo
 }

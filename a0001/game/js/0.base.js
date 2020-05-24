@@ -1,6 +1,3 @@
-//If you touch the js file, the browser may get stuck
-//All flow of the game is controlled by the server.
-//So if you change this, it's just an optical illusion effect.
 //G.G.
 document.addEventListener("contextmenu", handleContextualMenu);
 function handleContextualMenu(event) {
@@ -8,9 +5,9 @@ function handleContextualMenu(event) {
 }
 
 let imgBlack = new Image();
-imgBlack.src = "/asset/black.png"
+imgBlack.src = "/game/asset/black.png"
 let imgWhite = new Image();
-imgWhite.src = "/asset/white.png"
+imgWhite.src = "/game//asset/white.png"
 
 const bgCanvas = document.getElementById("bgCanvas");
 const bgCtx = bgCanvas.getContext("2d");
@@ -40,7 +37,8 @@ function fDrawBoard() {
     }
 }
 fDrawBoard();
-
+const msgCanvas = document.getElementById("msgCanvas");
+const msgCtx = msgCanvas.getContext("2d");
 const canvas = document.getElementById("fgCanvas");
 function fGetClickPos(e) {
     let rect = canvas.getBoundingClientRect();
@@ -51,8 +49,9 @@ const ctx = canvas.getContext("2d");
 const connectBtn = document.getElementById("connectBtn");
 const joinBtn = document.getElementById("joinBtn");
 const LeaveBtn = document.getElementById("leaveBtn");
-const test2 = document.getElementById("test2");
-
+const top2 = document.getElementById("top2");
+//io
+let zio = null;
 //render attack color
 let zbAttackTeamBlack = true;
 //for click arrow

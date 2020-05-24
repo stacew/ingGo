@@ -1,4 +1,4 @@
-package smygame
+package gameroom
 
 import (
 	"log"
@@ -142,27 +142,29 @@ func (m *GameRoomInfo) BroadcastInfoRoom() {
 
 	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
 }
+func (m *GameRoomInfo) broadcastStart() {
+	msg := ".s" //.s: Startin
+	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
+}
+
 func (m *GameRoomInfo) broadcastOneShotStartEnd(start bool) {
 	msg := ".o" //.o : oneShotStartEnd
 	if start {
 		msg = msg + "s,"
+		m.broadcastPlaying() //shot 시작 시, attackteam 색 알려주기
 	} else {
 		msg = msg + "e,"
 	}
 	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
 }
 func (m *GameRoomInfo) broadcastClientTimer(nTime int) {
-	msg := ".t" + //.c : Timer
+	msg := ".t" + //.t : Timer
 		strconv.Itoa(nTime) + ","
 
 	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
 }
-func (m *GameRoomInfo) broadcastPlaying(starting bool) {
-	var msg string
-	if starting {
-		msg = ".s" //.s: Starting
-	}
-	msg = msg + ".a" //.a : attackTeam
+func (m *GameRoomInfo) broadcastPlaying() {
+	msg := ".a" //.a : attackTeam
 	if m.bAttackTeamBlack {
 		msg = msg + "b,"
 	} else {
@@ -192,8 +194,7 @@ func (m *GameRoomInfo) Start() {
 
 	m.bAttackTeamBlack = true
 	m.playerStartUp()
-
-	m.broadcastPlaying(true) //true = starting
+	m.broadcastStart()
 
 	for {
 		bGameOver := m.checkGameOver()
@@ -275,8 +276,8 @@ func (m *GameRoomInfo) playing(nFrame, nPlayingTime int) {
 	for i := 0; i < loopCnt; i++ {
 		m.physicsMove()
 		m.physicsCollision()
-		m.broadcastPlaying(false)
 
+		m.broadcastPlaying()
 		time.Sleep(time.Duration(nFrame) * time.Millisecond)
 	}
 	m.playerSpeedInit()
@@ -288,7 +289,7 @@ func (m *GameRoomInfo) growing() {
 		}
 		playerInfo.nRadius += 10
 	}
-	m.broadcastPlaying(false)
+	m.broadcastPlaying()
 }
 func (m *GameRoomInfo) setShotInfo(nFrame, nPlayingTime int) {
 	loopCnt := nPlayingTime * 1000 / nFrame

@@ -9,10 +9,10 @@
 }
 
 .btnClass{
-    position: fixed;
-    top:40%;
+    margin-top: 30vw;
+    margin-top: calc(min(30vh,30vw));
 
-    z-index: 3;
+    z-index: 10;
     outline: none;
     border-radius: 2%;
     padding: 1vw 5vw;
@@ -37,11 +37,15 @@
     100%{   transform: translateY(calc(min(0vh,0vw)));}
 }
 #bgCanvas{
+    z-index: 1;
     background-color:burlywood;
     border-radius: 1%;
 }
-#fgCancas{
+#msgCanvas{
     z-index: 2;
+}
+#fgCanvas{
+    z-index: 3;
 }
 .canvasClass{
     position: fixed;
@@ -51,8 +55,8 @@
 .canvasClass {    
     height: 264px; 
     width: 264px;
-    height: calc(min(88vh,88vw));
-    width: calc(min(88vh,88vw));
+    height: calc(min(80vh,80vw));
+    width: calc(min(80vh,80vw));
 }
 
 /* IE랑 Edge는 calc(min())이 안돼서 미디어쿼리 남발...*/

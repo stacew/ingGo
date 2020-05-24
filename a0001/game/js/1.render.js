@@ -29,7 +29,7 @@ function fInfoRoom(msg, nFindIndex) {
     multi = msgToken([msg, multi[1]]);
     let strRoomCapacity = multi[0];
 
-    test2.textContent = strPlayerCount + "/" + strRoomCapacity;
+    top2.textContent = strPlayerCount + "/" + strRoomCapacity;
 
     return multi[1];
 }
@@ -46,7 +46,7 @@ function fClientTimer(msg, nFindIndex) {
     let multi = msgToken([msg, nFindIndex]);
     let strTime = multi[0];
 
-    test2.textContent = strTime;
+    top2.textContent = strTime;
 
     return multi[1];
 }
@@ -54,7 +54,7 @@ function fDieMessage(msg, nFindIndex) {
     let multi = msgToken([msg, nFindIndex]);
     let strCID = multi[0];
 
-    if (strCID == sio.io.engine.id) { fDie(); }
+    if (strCID == zio.io.engine.id) { fDie(); }
 
     return multi[1];
 }
@@ -81,10 +81,10 @@ function fPlaying(msg, nFindIndex) {
         fDrawCircle(nX, nY, nR, circleColor);
     }
 
-    if (strCID == sio.io.engine.id) {
+    if (strCID == zio.io.engine.id) {
         znMyX = nX;
         znMyY = nY;
-        fDrawCircle(nX, nY, nR + 10, circleColor);
+        fDrawCircle(nX, nY, nR + 10, "black");
     }
 
     return multi[1];
