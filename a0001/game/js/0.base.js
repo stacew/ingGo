@@ -7,7 +7,7 @@ function handleContextualMenu(event) {
 let imgBlack = new Image();
 imgBlack.src = "/game/asset/black.png"
 let imgWhite = new Image();
-imgWhite.src = "/game//asset/white.png"
+imgWhite.src = "/game/asset/white.png"
 
 const bgCanvas = document.getElementById("bgCanvas");
 const bgCtx = bgCanvas.getContext("2d");
@@ -40,16 +40,15 @@ fDrawBoard();
 const msgCanvas = document.getElementById("msgCanvas");
 const msgCtx = msgCanvas.getContext("2d");
 const canvas = document.getElementById("fgCanvas");
+const ctx = canvas.getContext("2d");
 function fGetClickPos(e) {
     let rect = canvas.getBoundingClientRect();
     return [e.layerX / rect.width * canvas.width, e.layerY / rect.height * canvas.height];
 }
 
-const ctx = canvas.getContext("2d");
 const connectBtn = document.getElementById("connectBtn");
 const joinBtn = document.getElementById("joinBtn");
 const LeaveBtn = document.getElementById("leaveBtn");
-const top2 = document.getElementById("top2");
 //io
 let zio = null;
 //render attack color

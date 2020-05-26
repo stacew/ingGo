@@ -6,22 +6,31 @@ import (
 	"stacew/teamgoing/sign"
 	socketmaker "stacew/teamgoing/socketMaker"
 
+	socketio "github.com/googollee/go-socket.io"
 	"github.com/gorilla/pat"
 	"github.com/urfave/negroni"
-
-	socketio "github.com/googollee/go-socket.io"
 )
 
 //AppHandler is
 type AppHandler struct {
 	http.Handler   //embeded is-a같은 has-a 관계라는데, 이름 정해주면 안 됨...
 	socketioServer *socketio.Server
-	// dmHandler    dataModel.DataHandlerInterface
+	// dmHandler      datamodel.DataHandlerInterface
+}
+
+func (m *AppHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
+}
+func (m *AppHandler) signHandler(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/sign/sign.html", http.StatusTemporaryRedirect)
+
+	//add user 언제 함?
 }
 
 //Close is
 func (m *AppHandler) Close() {
 	m.socketioServer.Close()
+	// m.dmHandler.Close()
 }
 
 //Start is
@@ -30,7 +39,7 @@ func (m *AppHandler) Start() {
 }
 
 //MakeNewHandler is
-func MakeNewHandler() *AppHandler {
+func MakeNewHandler(dbConn string) *AppHandler {
 	socketioServer, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatalln(err)
@@ -45,7 +54,7 @@ func MakeNewHandler() *AppHandler {
 	// -----------------
 	appHandler := &AppHandler{
 		Handler: neg,
-		// dmHandler: dataModel.NewDataHandler(dbConn),
+		// dmHandler:      datamodel.NewDataHandler(dbConn),
 		socketioServer: socketioServer,
 	}
 	// -----------------
@@ -55,11 +64,10 @@ func MakeNewHandler() *AppHandler {
 	mux.Add("GET", "/socket.io/", socketioServer)
 	// mux.Add("POST", "/socket.io/", socketioServer) 예제에 post도 등록하는데 이유가..?
 	// -----------------
-	mux.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
-	})
-	// -----------------
 	sign.SetHandle(mux)
+	// -----------------
+	mux.Get("/sign", appHandler.signHandler)
+	mux.Get("/", appHandler.indexHandler)
 	//...expand
 	// -----------------
 	return appHandler

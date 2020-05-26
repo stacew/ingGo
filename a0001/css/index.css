@@ -5,7 +5,7 @@ body{
     display: flex;
     justify-content: center;
 }
-.topBottomWrapper{
+.topWrapper, .bottomWrapper{
     position: fixed;
     width: 90%;
 
@@ -16,15 +16,13 @@ body{
     padding:  calc(min(0.5vh,0.5vw));
     background-color: darkgray;
 }
-.menuWrapper{
+.topWrapper{
     top: 0%;
     display: flex;
     justify-content: space-between;
 }
-.licenceWrapper{
+.bottomWrapper{
     bottom: 0%;
-    color:orangered;
-}
-.licence{
-    color:darkslategray;
+    display: flex;
+    justify-content: space-between;
 }

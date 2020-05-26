@@ -2,19 +2,20 @@ package datamodel
 
 //UserInfo is
 type UserInfo struct {
-	Name  string `json:"name"`
-	Point int    `json:"point"`
+	Name      string `json:"name"`
+	Point     int    `json:"point"`
+	WinStreak int    `json:"winstreak"`
 }
 
 //DataHandlerInterface is
 type DataHandlerInterface interface {
 	//create
-	AddUser(sessionID, name string) *UserInfo
+	AddUser(sessionID string) *UserInfo
 	//read
 	GetUserInfo(sessionID string) *UserInfo
 	//update
 	UpdateUserName(sessionID, name string) bool
-	UpdateUserPoint(sessionID, point int) bool
+	UpdateUserPoint(sessionID, point, winstreak int) bool
 	//delete
 	RemoveUser(sessionID string) bool
 	//close

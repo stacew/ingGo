@@ -3,6 +3,7 @@ package gameserver
 import (
 	"errors"
 	gameroom "stacew/teamgoing/gameRoom"
+	"sync"
 
 	socketio "github.com/googollee/go-socket.io"
 )
@@ -33,7 +34,7 @@ func (m *MyGameServer) BroadCastJoinAndStart(conID string) {
 	go gameRoomInfo.Start()
 }
 
-func (m *MyGameServer) joinProcess(conID string, gameRoomInfo *gameroom.GameRoomInfo) string {
+func (m *MyGameServer) joinGameRoom(conID string, gameRoomInfo *gameroom.GameRoomInfo) string {
 	roomName := gameRoomInfo.Join(conID)
 	m.conGameRoomMap[conID] = gameRoomInfo
 	return roomName
@@ -43,7 +44,7 @@ func (m *MyGameServer) joinProcess(conID string, gameRoomInfo *gameroom.GameRoom
 func (m *MyGameServer) CJoin(conID string) (string, error) {
 	//추후 레이팅 매칭 작업
 	for gameRoomInfo, gameRoomName := range m.matchRoom {
-		m.joinProcess(conID, gameRoomInfo)
+		m.joinGameRoom(conID, gameRoomInfo)
 		roomJoinCount := gameRoomInfo.GetPlayerCount()
 		if roomJoinCount == nRoomCapacity {
 			m.playRoom[gameRoomInfo] = gameRoomName
@@ -54,9 +55,8 @@ func (m *MyGameServer) CJoin(conID string) (string, error) {
 
 	//matchRoom이 없으면 새로 만든다.
 	gameRoomInfo := gameroom.NewGameRoomInfo(m.socketioServer, m.nsp, nRoomCapacity)
-	gameRoomName := m.joinProcess(conID, gameRoomInfo)
+	gameRoomName := m.joinGameRoom(conID, gameRoomInfo)
 	m.matchRoom[gameRoomInfo] = gameRoomName
-
 	return gameRoomName, nil
 }
 
@@ -84,6 +84,7 @@ func NewGameServer(socketioServer *socketio.Server, nsp string) *MyGameServer {
 	gameserver := &MyGameServer{
 		socketioServer: socketioServer,
 		nsp:            nsp,
+		mutex:          new(sync.RWMutex), //지금은 SocketMaker에서 방 입장, 나가기 등을 큰 lock을 걸어서 처리함 2
 
 		matchRoom:      make(map[*gameroom.GameRoomInfo]string),
 		playRoom:       make(map[*gameroom.GameRoomInfo]string),
@@ -96,6 +97,7 @@ func NewGameServer(socketioServer *socketio.Server, nsp string) *MyGameServer {
 type MyGameServer struct {
 	socketioServer *socketio.Server
 	nsp            string
+	mutex          *sync.RWMutex //지금은 SocketMaker에서 방 입장, 나가기 등을 큰 lock을 걸어서 처리함 1
 
 	matchRoom      map[*gameroom.GameRoomInfo]string
 	playRoom       map[*gameroom.GameRoomInfo]string

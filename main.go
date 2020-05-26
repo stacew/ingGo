@@ -11,7 +11,11 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	// log.Println(runtime.GOMAXPROCS(1))
 	// log.Println(runtime.GOMAXPROCS(1))
-	appHandler := myapp.MakeNewHandler()
+
+	dbConn := "host=localhost port=8080 user=yslee password=1234 dbname=test.db sslmode=disable"
+	// dbConn := os.Getenv("DATABASE_URL")
+
+	appHandler := myapp.MakeNewHandler(dbConn)
 	defer appHandler.Close()
 	appHandler.Start()
 

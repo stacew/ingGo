@@ -1,4 +1,5 @@
 function fClearCanvas() {
+    msgCtx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -22,6 +23,15 @@ function fDrawArrowLine(x1, y1, x2, y2, color) {
     ctx.stroke();
     ctx.closePath();
 }
+
+function fDrawText(text, color) {
+    msgCtx.clearRect(0, 0, canvas.width, canvas.height);
+    msgCtx.font = '240px serif';
+    msgCtx.textBaseline = 'middle';
+    msgCtx.textAlign = 'center';
+    msgCtx.fillStyle = color;
+    msgCtx.fillText(text, 500, 500);
+}
 //////
 function fInfoRoom(msg, nFindIndex) {
     let multi = msgToken([msg, nFindIndex]);
@@ -29,7 +39,7 @@ function fInfoRoom(msg, nFindIndex) {
     multi = msgToken([msg, multi[1]]);
     let strRoomCapacity = multi[0];
 
-    top2.textContent = strPlayerCount + "/" + strRoomCapacity;
+    fDrawText(strPlayerCount + " / " + strRoomCapacity, "white");
 
     return multi[1];
 }
@@ -46,7 +56,7 @@ function fClientTimer(msg, nFindIndex) {
     let multi = msgToken([msg, nFindIndex]);
     let strTime = multi[0];
 
-    top2.textContent = strTime;
+    fDrawText(strTime, "red");
 
     return multi[1];
 }
@@ -72,13 +82,10 @@ function fPlaying(msg, nFindIndex) {
 
     let circleColor;
     if (charBW == 'b') {
-        circleColor = zbAttackTeamBlack ? "red" : "skyblue";
         fDrawPlayer(imgBlack, nX, nY, nR);
-        fDrawCircle(nX, nY, nR, circleColor);
+        fDrawCircle(nX, nY, nR, "red");
     } else {
-        circleColor = zbAttackTeamBlack ? "skyblue" : "red";
         fDrawPlayer(imgWhite, nX, nY, nR);
-        fDrawCircle(nX, nY, nR, circleColor);
     }
 
     if (strCID == zio.io.engine.id) {

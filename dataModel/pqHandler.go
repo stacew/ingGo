@@ -10,12 +10,12 @@ type pqHandler struct {
 	db *sql.DB
 }
 
-func (s *pqHandler) AddUser(sessionID, name string) *UserInfo {
-	stmt, err := s.db.Prepare("INSERT INTO oauth (sessionID, name) VALUES ($1, $2)")
+func (s *pqHandler) AddUser(sessionID string) *UserInfo {
+	stmt, err := s.db.Prepare("INSERT INTO users (sessionID) VALUES ($1)")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	rst, err := stmt.Exec(sessionID, name)
+	rst, err := stmt.Exec(sessionID)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -24,11 +24,11 @@ func (s *pqHandler) AddUser(sessionID, name string) *UserInfo {
 		log.Fatalln(err)
 	}
 
-	userInfo := &UserInfo{Name: name, Point: 1000}
+	userInfo := &UserInfo{Name: "noname", Point: 1000, WinStreak: 0}
 	return userInfo
 }
 func (s *pqHandler) GetUserInfo(sessionID string) *UserInfo {
-	rows, err := s.db.Query("SELECT name, point FROM oauth WHERE sessionID=$1", sessionID)
+	rows, err := s.db.Query("SELECT name, point FROM users WHERE sessionID=$1", sessionID)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -40,7 +40,7 @@ func (s *pqHandler) GetUserInfo(sessionID string) *UserInfo {
 }
 
 func (s *pqHandler) UpdateUserName(sessionID, name string) bool {
-	stmt, err := s.db.Prepare("UPDATE oauth SET name=$1 WHERE sessionID=$2")
+	stmt, err := s.db.Prepare("UPDATE users SET name=$1 WHERE sessionID=$2")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -53,12 +53,12 @@ func (s *pqHandler) UpdateUserName(sessionID, name string) bool {
 	return cnt > 0
 }
 
-func (s *pqHandler) UpdateUserPoint(sessionID, point int) bool {
-	stmt, err := s.db.Prepare("UPDATE oauth SET point=$1 WHERE sessionID=$2")
+func (s *pqHandler) UpdateUserPoint(sessionID, point, winStreak int) bool {
+	stmt, err := s.db.Prepare("UPDATE users SET point=$1, winstreak=$2 WHERE sessionID=$3")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	rst, err := stmt.Exec(point, sessionID)
+	rst, err := stmt.Exec(point, winStreak, sessionID)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -68,7 +68,7 @@ func (s *pqHandler) UpdateUserPoint(sessionID, point int) bool {
 }
 
 func (s *pqHandler) RemoveUser(sessionID string) bool {
-	stmt, err := s.db.Prepare("DELETE FROM oauth WHERE sessionID=$1")
+	stmt, err := s.db.Prepare("DELETE FROM users WHERE sessionID=$1")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -89,17 +89,19 @@ func newPQHandler(dbConn string) DataHandlerInterface {
 
 	//  id 필요없어 보여서... 빼봄..
 	// statement, err := database.Prepare(
-	// 	`CREATE TABLE IF NOT EXISTS oauth (
+	// 	`CREATE TABLE IF NOT EXISTS users (
 	// 		id 	SERIAL PRIMARY KEY,
 	// 		sessionID	VARCHAR(256),
 	// 		name		TEXT,
 	// 		point		INTEGER,
+	//		winstreak	INTEGER,
 	// 	);`)
 	statement, err := database.Prepare(
-		`CREATE TABLE IF NOT EXISTS oauth (
+		`CREATE TABLE IF NOT EXISTS users (
 			sessionID	VARCHAR(256) PRIMARY KEY,
 			name		TEXT,
 			point		INTEGER,
+			winstreak	INTEGER,
 		);`)
 
 	if err != nil {
@@ -111,7 +113,7 @@ func newPQHandler(dbConn string) DataHandlerInterface {
 	}
 
 	statement, err = database.Prepare(
-		`CREATE INDEX IF NOT EXISTS sessionIDIndexOnOauth ON oauth (
+		`CREATE INDEX IF NOT EXISTS sessionIDIndexOnUsers ON users (
 			sessionID ASC
 		);`)
 	if err != nil {

@@ -3,9 +3,9 @@ package sign
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/pat"
@@ -27,25 +27,19 @@ func CheckSign(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	}
 
 	val := fGetSessionID(r)
-	fmt.Println(val)
-	//목표
-	//1. 유저가 Sign Up 하면, 내 도메인 브라우저 쿠키가 세션을 만들어야 한다.
+	if val != "" {
+		w.Header().Add("sign", "true")
 
-	//2. 유저가 사이트에서 활동할 때, 브라우저에 sessionID가 있다면 w에 세팅해서 페이지의 모양을 좀 바꿔줘야 할 것 같다.
-
-	//3, 서버의 쿠키스토어와 다르면?
-	//고로 CheckSign()은 2번에서 필요하다.
-	//*. slither.io는 어떻게 변경시킨건지 모르겠다. 화면만 바뀌는건가?
+		if strings.Contains(r.URL.Path, "/sign") || strings.Contains(r.URL.Path, "/auth") {
+			http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
+		}
+	}
 
 	next(w, r)
 }
 
 //SetHandle is
 func SetHandle(mux *pat.Router) {
-	mux.Get("/sign", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/sign.html", http.StatusTemporaryRedirect)
-	})
-
 	setGoogleHandle(mux)
 }
 

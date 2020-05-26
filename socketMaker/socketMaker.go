@@ -3,6 +3,7 @@ package socketmaker
 import (
 	"errors"
 	gameserver "stacew/teamgoing/gameServer"
+	"sync"
 
 	"log"
 
@@ -14,6 +15,7 @@ func NewGameServerAndMakeSocketHandler(socketioServer *socketio.Server) {
 	indexGameNSP := "/"
 	indexSocektServerInfo := &SocketServerInfo{
 		nsp:        indexGameNSP,
+		mutex:      new(sync.RWMutex),
 		conCount:   0,
 		currentCon: 0,
 	}
@@ -27,6 +29,7 @@ func NewGameServerAndMakeSocketHandler(socketioServer *socketio.Server) {
 //SocketServerInfo is
 type SocketServerInfo struct {
 	nsp        string
+	mutex      *sync.RWMutex
 	conCount   int
 	currentCon int
 }
@@ -54,12 +57,16 @@ func (m *SocketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameS
 			return
 		}
 
+		m.mutex.Lock() //
+
 		roomName, err := gameServer.CJoin(c.ID())
 		if err != nil {
 			log.Println("[Check Error] Join")
 			return
 		}
 		c.Join(roomName)
+
+		m.mutex.Unlock() //
 
 		gameServer.BroadCastJoinAndStart(c.ID())
 	})
@@ -78,6 +85,7 @@ func (m *SocketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameS
 
 func (m *SocketServerInfo) makeBaseSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
 	socketioServer.OnConnect(m.nsp, func(c socketio.Conn) error {
+
 		if c == nil {
 			return errors.New("[ConnNil] connect nil : " + m.nsp)
 		}
@@ -107,10 +115,12 @@ func (m *SocketServerInfo) makeBaseSocket(socketioServer *socketio.Server, gameS
 			return
 		}
 
+		m.mutex.Lock() //
 		gameRoomName, bExist := gameServer.CLeave(c.ID())
 		if bExist {
 			c.Leave(gameRoomName) //
 		}
+		m.mutex.Unlock() //
 		m.currentCon--
 	})
 }
