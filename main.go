@@ -12,9 +12,7 @@ func main() {
 	// log.Println(runtime.GOMAXPROCS(1))
 	// log.Println(runtime.GOMAXPROCS(1))
 
-	dbConn := "host=localhost port=8080 user=yslee password=1234 dbname=test.db sslmode=disable"
-	// dbConn := os.Getenv("DATABASE_URL")
-
+	dbConn := "./test.db"
 	appHandler := myapp.MakeNewHandler(dbConn)
 	defer appHandler.Close()
 	appHandler.Start()

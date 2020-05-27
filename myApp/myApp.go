@@ -3,6 +3,7 @@ package myapp
 import (
 	"log"
 	"net/http"
+	datamodel "stacew/teamgoing/dataModel"
 	"stacew/teamgoing/sign"
 	socketmaker "stacew/teamgoing/socketMaker"
 
@@ -15,7 +16,7 @@ import (
 type AppHandler struct {
 	http.Handler   //embeded is-a같은 has-a 관계라는데, 이름 정해주면 안 됨...
 	socketioServer *socketio.Server
-	// dmHandler      datamodel.DataHandlerInterface
+	dmHandler      datamodel.DataHandlerInterface
 }
 
 func (m *AppHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +31,7 @@ func (m *AppHandler) signHandler(w http.ResponseWriter, r *http.Request) {
 //Close is
 func (m *AppHandler) Close() {
 	m.socketioServer.Close()
-	// m.dmHandler.Close()
+	m.dmHandler.Close()
 }
 
 //Start is
@@ -42,7 +43,7 @@ func (m *AppHandler) Start() {
 func MakeNewHandler(dbConn string) *AppHandler {
 	socketioServer, err := socketio.NewServer(nil)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 	socketmaker.NewGameServerAndMakeSocketHandler(socketioServer)
 	// -----------------
@@ -53,8 +54,8 @@ func MakeNewHandler(dbConn string) *AppHandler {
 		negroni.NewStatic(http.Dir("a0001"))) //패치 후, 폴더 이름 변경
 	// -----------------
 	appHandler := &AppHandler{
-		Handler: neg,
-		// dmHandler:      datamodel.NewDataHandler(dbConn),
+		Handler:        neg,
+		dmHandler:      datamodel.NewDataHandler(dbConn),
 		socketioServer: socketioServer,
 	}
 	// -----------------

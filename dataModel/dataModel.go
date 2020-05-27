@@ -15,17 +15,16 @@ type eOAuthPlatform int
 const (
 	eGoogle eOAuthPlatform = iota
 	eFacebook
+	eNone
 )
 
 //DataHandlerInterface is
 type DataHandlerInterface interface {
-	//create
-	addUser(ePlatform eOAuthPlatform, sessionID string) *UserInfo
-	//read
-	GetUserInfo(ePlatform eOAuthPlatform, sessionID string) *UserInfo
+	//read & create
+	GetAndAddUserInfo(ePlatform eOAuthPlatform, sessionID string) *UserInfo
 	//update
 	UpdateUserName(userID int, name string) bool
-	UpdateUserPoint(userID, point, winstreak, kill, resurrect int) bool
+	UpdateUserPoint(userID, point, winStreak, kill, resurrect int) bool
 	//delete
 	RemoveUser(userID int) bool
 	//close
