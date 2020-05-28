@@ -1,8 +1,9 @@
-package datamodel
+package dm
 
 import (
 	"database/sql"
 	"log"
+	"stacew/teamgoing/sign"
 
 	_ "github.com/mattn/go-sqlite3" //위의 sql에 대한 go-sqlite3를 사용한다는 암시적 의미로 추가
 )
@@ -12,7 +13,7 @@ type sqHandler struct {
 }
 
 //create ///////////////////////////////////////////////////////////
-func (m *sqHandler) addUser(ePlatform eOAuthPlatform, sessionID string) *UserInfo {
+func (m *sqHandler) addUser(ePlatform sign.PlatformType, platformID string) *UserInfo {
 	//1 Insert GameUserInfo
 	stmt, err := m.db.Prepare("INSERT INTO GameUserInfo (name,point,winStreak,kill,resurrect) VALUES (?,?,?,?,?)")
 	if err != nil {
@@ -44,17 +45,17 @@ func (m *sqHandler) addUser(ePlatform eOAuthPlatform, sessionID string) *UserInf
 	}
 
 	//3 Insert ePlatform
-	if ePlatform == eGoogle {
-		stmt, err = m.db.Prepare("INSERT INTO GoogleUserID (userID, sessionID) VALUES (?, ?)")
-	} else if ePlatform == eFacebook {
-		stmt, err = m.db.Prepare("INSERT INTO FacebookUserID (userID, sessionID) VALUES (?, ?)")
+	if ePlatform == sign.Google {
+		stmt, err = m.db.Prepare("INSERT INTO Google (userID, platformID) VALUES (?, ?)")
+	} else if ePlatform == sign.Facebook {
+		stmt, err = m.db.Prepare("INSERT INTO Facebook (userID, platformID) VALUES (?, ?)")
 	}
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rst, err = stmt.Exec(userID, sessionID) //+++
+	rst, err = stmt.Exec(userID, platformID) //+++
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,34 +69,34 @@ func (m *sqHandler) addUser(ePlatform eOAuthPlatform, sessionID string) *UserInf
 }
 
 //read ///////////////////////////////////////////////////////////
-func (m *sqHandler) GetAndAddUserInfo(ePlatform eOAuthPlatform, sessionID string) *UserInfo {
-	if ePlatform >= eNone {
+func (m *sqHandler) GetAndAddUserInfo(ePlatform sign.PlatformType, platformID string) *UserInfo {
+	if ePlatform >= sign.None {
 		log.Fatal("[FATAL] Database AddUser() : ePlatform Err")
 	}
 
 	var rows1 *sql.Rows
 	var err error
 	//1
-	if ePlatform == eGoogle {
-		rows1, err = m.db.Query("SELECT (userID) FROM GoogleUserID WHERE (sessionID=?)", sessionID) //+++
-	} else if ePlatform == eFacebook {
-		rows1, err = m.db.Query("SELECT (userID) FROM FacebookUserID WHERE (sessionID=?)", sessionID) //+++
+	if ePlatform == sign.Google {
+		rows1, err = m.db.Query("SELECT (userID) FROM Google WHERE (platformID=?)", platformID) //+++
+	} else if ePlatform == sign.Facebook {
+		rows1, err = m.db.Query("SELECT (userID) FROM Facebook WHERE (platformID=?)", platformID) //+++
 	}
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer rows1.Close()
 
 	userID := -1
 	rows1.Scan(&userID)
 	if userID == -1 {
-		return m.addUser(ePlatform, sessionID) //+++++++++++
+		return m.addUser(ePlatform, platformID) //+++++++++++
 	}
 
 	//2
 	rows2, err := m.db.Query("SELECT (name,point,winStreak,kill,resurrect) FROM GameUserInfo WHERE (userID=?)", userID) //p+++
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer rows2.Close()
 
@@ -135,7 +136,7 @@ func (m *sqHandler) UpdateUserPoint(userID, point, winStreak, kill, resurrect in
 //delete ///////////////////////////////////////////////////////////
 func (m *sqHandler) RemoveUser(userID int) bool {
 	//1
-	stmt, err := m.db.Prepare("DELETE FROM GoogleUserID WHERE userID=?")
+	stmt, err := m.db.Prepare("DELETE FROM Google WHERE userID=?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -145,7 +146,7 @@ func (m *sqHandler) RemoveUser(userID int) bool {
 	}
 	cnt1, _ := rst.RowsAffected()
 	//
-	stmt, err = m.db.Prepare("DELETE FROM FacebookUserID WHERE userID=?")
+	stmt, err = m.db.Prepare("DELETE FROM Facebook WHERE userID=?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -185,7 +186,7 @@ func newSQliteHandler(filePath string) DataHandlerInterface {
 		log.Fatal(err)
 	}
 
-	statement, err := database.Prepare(
+	stmt, err := database.Prepare(
 		`CREATE TABLE IF NOT EXISTS GameUserInfo (
 			userID		INTEGER PRIMARY KEY AUTOINCREMENT,
 			name		TEXT,
@@ -193,32 +194,68 @@ func newSQliteHandler(filePath string) DataHandlerInterface {
 			winStreak	INTEGER,
 			kill	 	INTEGER,
 			resurrect 	INTEGER
-		);
-		CREATE INDEX IF NOT EXISTS userIDIndexOnGameUserInfo ON GameUserInfo (
-			userID ASC
-		);
-		
-		CREATE TABLE IF NOT EXISTS GoogleUserID (
-			userID		INTEGER PRIMARY KEY,
-			sessionID	STRING
-		);
-		CREATE INDEX IF NOT EXISTS sessionIDIndexOnGoogleUserID ON GoogleUserID (
-			sessionID ASC
-		);
-
-		CREATE TABLE IF NOT EXISTS FacebookUserID (
-			userID		INTEGER PRIMARY KEY,
-			sessionID	STRING
-		);
-		CREATE INDEX IF NOT EXISTS sessionIDIndexOnFacebookUserID ON FacebookUserID (
-			sessionID ASC
 		);`)
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	_, err = statement.Exec()
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt, err = database.Prepare(
+		`CREATE INDEX IF NOT EXISTS userIDIndexOnGameUserInfo ON GameUserInfo (
+			userID ASC
+		);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt, err = database.Prepare(
+		`CREATE TABLE IF NOT EXISTS Google (
+			userID		INTEGER PRIMARY KEY,
+			platformID	STRING
+		);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt, err = database.Prepare(
+		`CREATE INDEX IF NOT EXISTS sessionIDIndexOnGoogle ON Google (
+			platformID ASC
+		);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt, err = database.Prepare(
+		`CREATE TABLE IF NOT EXISTS Facebook (
+			userID		INTEGER PRIMARY KEY,
+			platformID	STRING
+		);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt, err = database.Prepare(
+		`CREATE INDEX IF NOT EXISTS sessionIDIndexOnFacebook ON Facebook (
+			platformID ASC
+		);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = stmt.Exec()
 	if err != nil {
 		log.Fatal(err)
 	}

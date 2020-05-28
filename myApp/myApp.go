@@ -3,9 +3,11 @@ package myapp
 import (
 	"log"
 	"net/http"
-	datamodel "stacew/teamgoing/dataModel"
+	"stacew/teamgoing/cipher"
+	dm "stacew/teamgoing/dataModel"
 	"stacew/teamgoing/sign"
-	socketmaker "stacew/teamgoing/socketMaker"
+	socketserver "stacew/teamgoing/socketServer"
+	"strconv"
 
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/gorilla/pat"
@@ -16,10 +18,22 @@ import (
 type AppHandler struct {
 	http.Handler   //embeded is-a같은 has-a 관계라는데, 이름 정해주면 안 됨...
 	socketioServer *socketio.Server
-	dmHandler      datamodel.DataHandlerInterface
+	dmHandler      dm.DataHandlerInterface
 }
 
 func (m *AppHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
+
+	encryptplatformID := w.Header().Get(sign.ConstPlatformID)
+	platformType := w.Header().Get(sign.ConstPlatformType)
+	if encryptplatformID != "" && platformType != "" {
+		platformID := cipher.Decrypt(encryptplatformID)
+		signPlatformType, _ := strconv.Atoi(platformType)
+		userInfo := m.dmHandler.GetAndAddUserInfo(sign.PlatformType(signPlatformType), platformID)
+		log.Println(userInfo.Name)
+		log.Println(userInfo.Name)
+		log.Println(userInfo.Name)
+	}
+
 	http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
 }
 func (m *AppHandler) signHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +59,7 @@ func MakeNewHandler(dbConn string) *AppHandler {
 	if err != nil {
 		log.Fatal(err)
 	}
-	socketmaker.NewGameServerAndMakeSocketHandler(socketioServer)
+	socketserver.NewGameServerAndMakeSocketHandler(socketioServer)
 	// -----------------
 	neg := negroni.New(
 		negroni.NewRecovery(),
@@ -55,7 +69,7 @@ func MakeNewHandler(dbConn string) *AppHandler {
 	// -----------------
 	appHandler := &AppHandler{
 		Handler:        neg,
-		dmHandler:      datamodel.NewDataHandler(dbConn),
+		dmHandler:      dm.NewDataHandler(dbConn),
 		socketioServer: socketioServer,
 	}
 	// -----------------
@@ -63,7 +77,8 @@ func MakeNewHandler(dbConn string) *AppHandler {
 	neg.UseHandler(mux)
 	// -----------------
 	mux.Add("GET", "/socket.io/", socketioServer)
-	// mux.Add("POST", "/socket.io/", socketioServer) 예제에 post도 등록하는데 이유가..?
+	// 다른 웹 프레임 워크 예제에 post도 등록하던데 지금 여기서는 의미를 모르겠음
+	//mux.Add("POST", "/socket.io/", socketioServer)
 	// -----------------
 	sign.SetHandle(mux)
 	// -----------------

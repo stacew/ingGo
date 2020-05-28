@@ -1,4 +1,4 @@
-package socketmaker
+package socketserver
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 //NewGameServerAndMakeSocketHandler is
 func NewGameServerAndMakeSocketHandler(socketioServer *socketio.Server) {
 	indexGameNSP := "/"
-	indexSocektServerInfo := &SocketServerInfo{
+	indexSocektServerInfo := &socketServerInfo{
 		nsp:        indexGameNSP,
 		mutex:      new(sync.RWMutex),
 		conCount:   0,
@@ -26,20 +26,20 @@ func NewGameServerAndMakeSocketHandler(socketioServer *socketio.Server) {
 	indexSocektServerInfo.makeCustomSocket(socketioServer, gameServer)
 }
 
-//SocketServerInfo is
-type SocketServerInfo struct {
+//socketServerInfo is
+type socketServerInfo struct {
 	nsp        string
 	mutex      *sync.RWMutex
 	conCount   int
 	currentCon int
 }
 
-// Undevelop is 서버 정보 확인용으로 추후 작업, SocketServerInfo
-func (m *SocketServerInfo) Undevelop() {
+// Undevelop is 서버 정보 확인용으로 추후 작업, socketServerInfo
+func (m *socketServerInfo) Undevelop() {
 
 }
 
-func (m *SocketServerInfo) makeCustomSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
+func (m *socketServerInfo) makeCustomSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
 	socketioServer.OnEvent(m.nsp, "cShot", func(c socketio.Conn, msg string) {
 		gameServer.CShot(c.ID(), msg)
 	})
@@ -50,7 +50,7 @@ func (m *SocketServerInfo) makeCustomSocket(socketioServer *socketio.Server, gam
 	// })
 }
 
-func (m *SocketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
+func (m *socketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
 	socketioServer.OnEvent(m.nsp, "cJoin", func(c socketio.Conn) {
 		if c == nil {
 			log.Println("[ConnNil] cJoin")
@@ -66,6 +66,7 @@ func (m *SocketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameS
 		}
 		c.Join(roomName)
 
+		log.Println(c.Rooms())
 		m.mutex.Unlock() //
 
 		gameServer.BroadCastJoinAndStart(c.ID())
@@ -83,7 +84,7 @@ func (m *SocketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameS
 	})
 }
 
-func (m *SocketServerInfo) makeBaseSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
+func (m *socketServerInfo) makeBaseSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
 	socketioServer.OnConnect(m.nsp, func(c socketio.Conn) error {
 
 		if c == nil {

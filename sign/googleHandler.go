@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gorilla/pat"
 	"golang.org/x/oauth2"
@@ -52,7 +53,7 @@ func getGoogleUserInfo(code string) ([]byte, error) {
 
 //////
 func googleOauthCallback(w http.ResponseWriter, r *http.Request) {
-	oauthstate, _ := r.Cookie("oauthstate")
+	oauthstate, _ := r.Cookie(strOAuthState)
 	if oauthstate.Value != r.FormValue("state") {
 		errMsg := fmt.Sprintf("invalid google oauth state cookie:%s state:%s\n", oauthstate.Value, r.FormValue("state"))
 		log.Printf(errMsg)
@@ -76,8 +77,9 @@ func googleOauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, _ := cookieStore.Get(r, "session")
-	session.Values["id"] = userInfo.ID //key value 다른 정보 저장해도 됨.
+	session, _ := cookieStore.Get(r, constSession)
+	session.Values[ConstPlatformID] = userInfo.ID //key value 다른 정보 저장해도 됨.
+	session.Values[ConstPlatformType] = strconv.Itoa(int(Google))
 
 	err = session.Save(r, w)
 	if err != nil {

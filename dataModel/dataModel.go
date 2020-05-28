@@ -1,4 +1,6 @@
-package datamodel
+package dm
+
+import "stacew/teamgoing/sign"
 
 //UserInfo is
 type UserInfo struct {
@@ -10,18 +12,10 @@ type UserInfo struct {
 	Resurrect int    `json:"resurrect"`
 }
 
-type eOAuthPlatform int
-
-const (
-	eGoogle eOAuthPlatform = iota
-	eFacebook
-	eNone
-)
-
 //DataHandlerInterface is
 type DataHandlerInterface interface {
 	//read & create
-	GetAndAddUserInfo(ePlatform eOAuthPlatform, sessionID string) *UserInfo
+	GetAndAddUserInfo(ePlatform sign.PlatformType, platformID string) *UserInfo
 	//update
 	UpdateUserName(userID int, name string) bool
 	UpdateUserPoint(userID, point, winStreak, kill, resurrect int) bool

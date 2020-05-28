@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"net/http"
 	"os"
+	"stacew/teamgoing/cipher"
 	"strings"
 	"time"
 
@@ -12,23 +13,54 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+const (
+	strOAuthState = "oauthstate"
+)
+
 //uuid로 SESSION_KEY 생성 후 환경변수 등록
 var cookieStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 
+const (
+	constSession = "session"
+	//ConstPlatformID is
+	ConstPlatformID = "platformID"
+	//ConstPlatformType is
+	ConstPlatformType = "platform"
+)
+
+//PlatformType is
+type PlatformType int
+
+const (
+	//Google is
+	Google PlatformType = iota
+	//Facebook is
+	Facebook
+	//None is
+	None
+)
+
+//SetHandle is
+func SetHandle(mux *pat.Router) {
+	setGoogleHandle(mux)
+}
+
 //CheckSign is
 func CheckSign(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	fGetSessionID := func(r *http.Request) string {
-		session, _ := cookieStore.Get(r, "session")
-		val := session.Values["id"]
-		if val == nil {
-			return ""
+	fGetSession := func(r *http.Request) (string, string) {
+		session, _ := cookieStore.Get(r, constSession)
+		platformID := session.Values[ConstPlatformID]
+		platformType := session.Values[ConstPlatformType]
+		if platformID == nil || platformType == nil {
+			return "", ""
 		}
-		return val.(string)
+		return platformID.(string), platformType.(string)
 	}
 
-	val := fGetSessionID(r)
-	if val != "" {
-		w.Header().Add("sign", "true")
+	platformID, platformType := fGetSession(r)
+	if platformID != "" && platformType != "" {
+		w.Header().Add(ConstPlatformID, cipher.Encrypt(platformID))
+		w.Header().Add(ConstPlatformType, platformType)
 
 		if strings.Contains(r.URL.Path, "/sign") || strings.Contains(r.URL.Path, "/auth") {
 			http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
@@ -38,19 +70,13 @@ func CheckSign(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	next(w, r)
 }
 
-//SetHandle is
-func SetHandle(mux *pat.Router) {
-	setGoogleHandle(mux)
-}
-
-//////////
 func generateStateOauthCookie(w http.ResponseWriter) string {
 	b := make([]byte, 16)
 	rand.Read(b)
 	state := base64.URLEncoding.EncodeToString(b)
 
 	expiration := time.Now().Add(1 * 24 * time.Hour)
-	cookie := &http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
+	cookie := &http.Cookie{Name: strOAuthState, Value: state, Expires: expiration}
 	http.SetCookie(w, cookie)
 	return state
 }
