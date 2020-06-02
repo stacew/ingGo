@@ -57,18 +57,15 @@ func (m *socketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameS
 			return
 		}
 
-		m.mutex.Lock() //
-
 		roomName, err := gameServer.CJoin(c.ID())
 		if err != nil {
 			log.Println("[Check Error] Join")
 			return
 		}
+
+		m.mutex.Lock()
+		defer m.mutex.Unlock()
 		c.Join(roomName)
-
-		log.Println(c.Rooms())
-		m.mutex.Unlock() //
-
 		gameServer.BroadCastJoinAndStart(c.ID())
 	})
 
@@ -116,12 +113,12 @@ func (m *socketServerInfo) makeBaseSocket(socketioServer *socketio.Server, gameS
 			return
 		}
 
-		m.mutex.Lock() //
 		gameRoomName, bExist := gameServer.CLeave(c.ID())
 		if bExist {
+			m.mutex.Lock()
+			defer m.mutex.Unlock()
 			c.Leave(gameRoomName) //
 		}
-		m.mutex.Unlock() //
 		m.currentCon--
 	})
 }

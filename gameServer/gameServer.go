@@ -34,7 +34,7 @@ func (m *MyGameServer) BroadCastJoinAndStart(conID string) {
 	go gameRoomInfo.Start()
 }
 
-func (m *MyGameServer) joinGameRoom(conID string, gameRoomInfo *gameroom.GameRoomInfo) string {
+func (m *MyGameServer) joinGameRoom(conID string, gameRoomInfo *gameroom.RoomInfo) string {
 	roomName := gameRoomInfo.Join(conID)
 	m.conGameRoomMap[conID] = gameRoomInfo
 	return roomName
@@ -42,6 +42,10 @@ func (m *MyGameServer) joinGameRoom(conID string, gameRoomInfo *gameroom.GameRoo
 
 //CJoin is
 func (m *MyGameServer) CJoin(conID string) (string, error) {
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	//추후 레이팅 매칭 작업
 	for gameRoomInfo, gameRoomName := range m.matchRoom {
 		m.joinGameRoom(conID, gameRoomInfo)
@@ -54,7 +58,7 @@ func (m *MyGameServer) CJoin(conID string) (string, error) {
 	}
 
 	//matchRoom이 없으면 새로 만든다.
-	gameRoomInfo := gameroom.NewGameRoomInfo(m.socketioServer, m.nsp, nRoomCapacity)
+	gameRoomInfo := gameroom.NewRoomInfo(m.socketioServer, m.nsp, nRoomCapacity)
 	gameRoomName := m.joinGameRoom(conID, gameRoomInfo)
 	m.matchRoom[gameRoomInfo] = gameRoomName
 	return gameRoomName, nil
@@ -62,11 +66,14 @@ func (m *MyGameServer) CJoin(conID string) (string, error) {
 
 //CLeave is
 func (m *MyGameServer) CLeave(conID string) (string, bool) {
+
 	gameRoomInfo, ok := m.conGameRoomMap[conID]
 	if !ok {
 		return "", false //not joined game room
 	}
 
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	nRemainCount, roomName := gameRoomInfo.Leave(conID)
 	if nRemainCount == 0 {
 		delete(m.matchRoom, gameRoomInfo)
@@ -81,25 +88,25 @@ func (m *MyGameServer) CLeave(conID string) (string, bool) {
 
 //NewGameServer is
 func NewGameServer(socketioServer *socketio.Server, nsp string) *MyGameServer {
-	gameserver := &MyGameServer{
+	gameServer := &MyGameServer{
 		socketioServer: socketioServer,
 		nsp:            nsp,
-		mutex:          new(sync.RWMutex), //지금은 SocketMaker에서 방 입장, 나가기 등을 큰 lock을 걸어서 처리함 2
+		mutex:          new(sync.RWMutex),
 
-		matchRoom:      make(map[*gameroom.GameRoomInfo]string),
-		playRoom:       make(map[*gameroom.GameRoomInfo]string),
-		conGameRoomMap: make(map[string]*gameroom.GameRoomInfo)}
+		matchRoom:      make(map[*gameroom.RoomInfo]string),
+		playRoom:       make(map[*gameroom.RoomInfo]string),
+		conGameRoomMap: make(map[string]*gameroom.RoomInfo)}
 
-	return gameserver
+	return gameServer
 }
 
 //MyGameServer is
 type MyGameServer struct {
 	socketioServer *socketio.Server
 	nsp            string
-	mutex          *sync.RWMutex //지금은 SocketMaker에서 방 입장, 나가기 등을 큰 lock을 걸어서 처리함 1
+	mutex          *sync.RWMutex
 
-	matchRoom      map[*gameroom.GameRoomInfo]string
-	playRoom       map[*gameroom.GameRoomInfo]string
-	conGameRoomMap map[string]*gameroom.GameRoomInfo
+	matchRoom      map[*gameroom.RoomInfo]string
+	playRoom       map[*gameroom.RoomInfo]string
+	conGameRoomMap map[string]*gameroom.RoomInfo
 }

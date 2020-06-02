@@ -18,7 +18,9 @@ const (
 )
 
 //uuid로 SESSION_KEY 생성 후 환경변수 등록
-var cookieStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+const strEnvSessionKey = "SESSION_KEY"
+
+var cookieStore = sessions.NewCookieStore([]byte(os.Getenv(strEnvSessionKey)))
 
 const (
 	constSession = "session"

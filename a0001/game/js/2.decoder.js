@@ -11,28 +11,29 @@ function fMsgDecoder(msg) {
     while ((nFindIndex = msg.indexOf(".", nFindIndex)) > -1) {
         let charType = msg.charAt(nFindIndex + 1);
         switch (charType) {
+            case "a":
+                nFindIndex = fAttackTeamTurn(msg, nFindIndex + 1);
+                break;
             case "i":
                 nFindIndex = fInfoRoom(msg, nFindIndex + 1);
                 break;
-            case "s":
-                zbLive = true;
-                nFindIndex = nFindIndex + 2;
+            case "o":
+                nFindIndex = fOneshotStartEnd(msg, nFindIndex + 1);
                 break;
             case "p":
                 if (bNeedCanvasClear) { fClearCanvas(); bNeedCanvasClear = false; }
                 nFindIndex = fPlaying(msg, nFindIndex + 1);
                 break;
-            case "o":
-                nFindIndex = fOneshotStartEnd(msg, nFindIndex + 1);
+            case "s":
+                zbPlaying = true;
+                zbLive = true;
+                nFindIndex = nFindIndex + 2;
                 break;
             case "t":
                 nFindIndex = fClientTimer(msg, nFindIndex + 1);
                 break;
-            case "d":
-                nFindIndex = fDieMessage(msg, nFindIndex + 1);
-                break;
-            case "a":
-                nFindIndex = fAttackTeamTurn(msg, nFindIndex + 1);
+            case "x":
+                //nFindIndex = fGameOver(msg, nFindIndex + 1);
                 break;
             default:
                 console.log(charType); //decoder infinite loop checker

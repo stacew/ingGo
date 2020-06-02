@@ -36,22 +36,16 @@
     50%{    transform: translateY(calc(min(2vh,2vw)));}
     100%{   transform: translateY(calc(min(0vh,0vw)));}
 }
-#bgCanvas{
-    z-index: 1;
-    background-color:burlywood;
-    border-radius: 1%;
-}
-#msgCanvas{
-    z-index: 2;
-}
-#fgCanvas{
-    z-index: 3;
-}
+#bgCanvas{z-index: 1; background-color:burlywood;}
+#msgCanvas{z-index: 2;}
+#animCanvas{z-index: 3;}
+#fgCanvas{z-index: 4;}
+#menuCanvas{z-index: 0;}
 .canvasClass{
     position: fixed;
-    top:6%
+    top:6%;
+    border-radius: 1%;
 }
-
 .canvasClass {    
     height: 264px; 
     width: 264px;

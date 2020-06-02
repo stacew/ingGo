@@ -14,10 +14,6 @@ function fConnectClick() {
     fJoinShow(true);
 }
 
-function fDie() {
-    zbLive = false;
-    fLeaveShow(true);
-}
 function fJoinClick() {
     if (zio.io.engine.id == null) {
         fConnectShow(true);
@@ -36,9 +32,10 @@ function fLeaveClick() {
 function fRegisterReceiver() {
     zio = io('/');
     zio.on('sOver', function (msg) {
-        fDie();
+        zbPlaying = false;
+        fLeaveShow(true);
     });
-    zio.on('sGame', function (msg) {
+    zio.on('sDecoder', function (msg) {
         fMsgDecoder(msg);
     });
 }
@@ -48,11 +45,12 @@ function fRegisterReceiver() {
 // });
 
 function clickCanvas(e) {
-    if (zbShot == false || zbLive == false)
+    if (zbShotChance == false || zbLive == false)
         return;
-    zbShot = false;
+    zbShotChance = false;
     multi = fGetClickPos(e);
-    fDrawArrowLine(znMyX, znMyY, multi[0], multi[1], "black");
+    znShotX = multi[0];
+    znShotY = multi[1];
     zio.emit('cShot', parseInt(multi[0]).toString() + "," + parseInt(multi[1]).toString());
 }
-canvas.addEventListener("click", clickCanvas, false);
+fgCanvas.addEventListener("click", clickCanvas, false);

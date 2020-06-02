@@ -21,7 +21,6 @@ func createHash(key string) string {
 
 // Encrypt is
 func Encrypt(data string) string {
-	log.Println(os.Getenv(strEnvServerKey))
 	block, err := aes.NewCipher([]byte(createHash(os.Getenv(strEnvServerKey))))
 	if err != nil {
 		log.Fatal(err)

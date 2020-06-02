@@ -38,54 +38,18 @@ type playerInfo struct {
 	bLive   bool
 	speed   xyfloat64
 	nRadius int
+
+	nRating     int
+	killCount   int
+	reviveCount int
 }
 
-//NewGameRoomInfo is
-func NewGameRoomInfo(socketioServer *socketio.Server, nsp string, nRoomCapacity int) *GameRoomInfo {
-	const rowCount = 3
-	const colCount = 3
-	const maxPosCount = rowCount * colCount //보드 확장 가능성
-
-	gameRoomName := uuid.New().String()
-	if gameRoomName == "" {
-		log.Println("[Check uuid.New()]")
-		gameRoomName = uuid.New().String()
-	}
-
-	gameRoomInfo := &GameRoomInfo{
-		socketioServer: socketioServer,
-		nsp:            nsp,
-		roomCapacity:   nRoomCapacity,
-		playerMap:      make(map[string]*playerInfo),
-		gameRoomName:   gameRoomName,
-		randPos:        make([]xy, maxPosCount, maxPosCount),
-	}
-
-	//tucker random
-	for i := 0; i < rowCount; i++ {
-		for j := 0; j < colCount; j++ {
-			gameRoomInfo.randPos[i*rowCount+j].x = 150 + i*350
-			gameRoomInfo.randPos[i*rowCount+j].y = 150 + j*350
-		}
-	}
-
-	nSeed := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(nSeed)
-	for i := 0; i < maxPosCount; i++ {
-		n1 := r.Intn(maxPosCount)
-		n2 := r.Intn(maxPosCount)
-		gameRoomInfo.randPos[n1], gameRoomInfo.randPos[n2] = gameRoomInfo.randPos[n2], gameRoomInfo.randPos[n1]
-	}
-	//tucker random
-
-	return gameRoomInfo
-}
-
-//GameRoomInfo is
-type GameRoomInfo struct {
+//RoomInfo is
+type RoomInfo struct {
 	socketioServer *socketio.Server
 	nsp            string
 	gameRoomName   string
+	isStarted      bool
 
 	roomCapacity int
 	randPos      []xy
@@ -93,61 +57,79 @@ type GameRoomInfo struct {
 	playerMap        map[string]*playerInfo //key = c.ID()
 	bShotTime        bool
 	bAttackTeamBlack bool
+
+	turnCount    int
+	averageBlack int
+	averageWhite int
 }
 
 //GetPlayerCount is
-func (m *GameRoomInfo) GetPlayerCount() int {
+func (m *RoomInfo) GetPlayerCount() int {
 	return len(m.playerMap)
 }
 
 //Join is
-func (m *GameRoomInfo) Join(conID string) string {
-	m.playerMap[conID] = &playerInfo{}
+func (m *RoomInfo) Join(conID string) string {
+	m.playerMap[conID] = &playerInfo{nRating: 10000000} //todo: 유저 레이팅 처리 필요
 	return m.gameRoomName
 }
 
 //Leave is
-func (m *GameRoomInfo) Leave(conID string) (int, string) {
+func (m *RoomInfo) Leave(conID string) (int, string) {
 	delete(m.playerMap, conID)
 
 	nRemainCount := len(m.playerMap)
 	return nRemainCount, m.gameRoomName
 }
 
-func (m *GameRoomInfo) playerStartUp() {
+func (m *RoomInfo) startUp() {
+
+	m.isStarted = true
+
 	i := 0
 	for _, player := range m.playerMap {
-		(*player).pos.x = float64(m.randPos[i].x)
-		(*player).pos.y = float64(m.randPos[i].y)
-		(*player).nRadius = 30
+		player.pos.x = float64(m.randPos[i].x)
+		player.pos.y = float64(m.randPos[i].y)
+		player.nRadius = 30
 		i++
 		if i%2 == 0 {
 			player.bwTeam = "b"
+			m.averageBlack += player.nRating
 		} else {
 			player.bwTeam = "w"
+			m.averageWhite += player.nRating
 		}
 
 		player.bLive = true
 		player.shot.bSettedShot = false
+		player.reviveCount = 0
+		player.killCount = 0
 	}
+
+	m.averageBlack /= (m.roomCapacity / 2)
+	m.averageWhite /= (m.roomCapacity / 2)
+	m.turnCount = 0
 }
 
 /////////////////////////////////////////////
 
 //BroadcastInfoRoom is
-func (m *GameRoomInfo) BroadcastInfoRoom() {
+func (m *RoomInfo) BroadcastInfoRoom() {
+	if m.isStarted { // 시작한 방은 나갈 때 인원 정보 안보여주기 위해서
+		return
+	}
 	msg := ".i" + //.i : infoRoom
 		strconv.Itoa(len(m.playerMap)) + "," +
 		strconv.Itoa(m.roomCapacity) + ","
 
-	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
+	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sDecoder", msg)
 }
-func (m *GameRoomInfo) broadcastStart() {
+func (m *RoomInfo) broadcastStart() {
 	msg := ".s" //.s: Startin
-	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
+	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sDecoder", msg)
 }
 
-func (m *GameRoomInfo) broadcastOneShotStartEnd(start bool) {
+func (m *RoomInfo) broadcastOneShotStartEnd(start bool) {
 	msg := ".o" //.o : oneShotStartEnd
 	if start {
 		msg = msg + "s,"
@@ -155,15 +137,16 @@ func (m *GameRoomInfo) broadcastOneShotStartEnd(start bool) {
 	} else {
 		msg = msg + "e,"
 	}
-	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
+	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sDecoder", msg)
 }
-func (m *GameRoomInfo) broadcastClientTimer(nTime int) {
+
+func (m *RoomInfo) broadcastClientTimer(nTime int) {
 	msg := ".t" + //.t : Timer
 		strconv.Itoa(nTime) + ","
 
-	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
+	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sDecoder", msg)
 }
-func (m *GameRoomInfo) broadcastPlaying() {
+func (m *RoomInfo) broadcastPlaying() {
 	msg := ".a" //.a : attackTeam
 	if m.bAttackTeamBlack {
 		msg = msg + "b,"
@@ -172,34 +155,60 @@ func (m *GameRoomInfo) broadcastPlaying() {
 	}
 
 	for cID, playerInfo := range m.playerMap {
-		if playerInfo.bLive == false {
-			msg = msg + ".d" + //.d : die
-				cID + ","
-			continue
+		live := "d"
+		if playerInfo.bLive {
+			live = "l"
 		}
+
 		msg = msg + ".p" + //.p : playing
 			cID + "," +
 			strconv.Itoa(int(playerInfo.pos.x)) + "," +
 			strconv.Itoa(int(playerInfo.pos.y)) + "," +
 			strconv.Itoa(playerInfo.nRadius) + "," +
+			live + "," +
 			playerInfo.bwTeam + ","
 	}
-	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sGame", msg)
+	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sDecoder", msg)
+}
+
+func (m *RoomInfo) broadcastOver() {
+	msg := ".x" //exit
+	m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sDecoder", msg)
 }
 
 /////////////////////////////////////////////
+func (m *RoomInfo) gameOverProcess() {
+	bLiveBlack := false
+	bLiveWhite := false
+	for _, playerInfo := range m.playerMap {
+		if playerInfo.bLive == false {
+			continue
+		}
+
+		if playerInfo.bwTeam == "b" {
+			bLiveBlack = true
+		} else {
+			bLiveWhite = true
+		}
+	}
+
+	//todo
+	//m.averageBlack
+	//m.averageWhite
+	//m.broadcastOver()
+}
 
 //Start is goroutine
-func (m *GameRoomInfo) Start() {
+func (m *RoomInfo) Start() {
 
-	m.bAttackTeamBlack = true
-	m.playerStartUp()
+	m.startUp()
 	m.broadcastStart()
 
 	for {
-		bGameOver := m.checkGameOver()
-		if bGameOver {
-			m.socketioServer.BroadcastToRoom(m.nsp, m.gameRoomName, "sOver") //client js bLive 상태면 win임.
+		m.turnCount++
+
+		if m.checkGameOver() {
+			m.gameOverProcess()
 			//게임 & 소켓 룸 제거는 disconnect, leave 호출되면 사라짐.
 			break
 		}
@@ -209,50 +218,83 @@ func (m *GameRoomInfo) Start() {
 		m.broadcastOneShotStartEnd(true)
 		nTimeCount := 5 //그냥 입력 시간 5초?
 		for i := nTimeCount; i >= 0; i-- {
-			m.broadcastClientTimer(i) //초당 메시지 한 번 씩 전송
-			time.Sleep(time.Second)
+			m.broadcastClientTimer(i)
+			time.Sleep(time.Second) //초당 메시지 한 번 씩 전송
 		}
 		m.broadcastOneShotStartEnd(false)
 		m.bShotTime = false
 
-		nPlayingTime := 1
-		m.setShotInfo(nFrame, nPlayingTime) //사용자 shot 입력 -> player speed 세팅
-		m.playing(nFrame, nPlayingTime)     //게임 진행 및 플레이
+		nPlayingTime := 1 //이동 시간 1초에 그리기
+		m.setShotInfo(nFrame, nPlayingTime)
+		m.playing(nFrame, nPlayingTime)
 
-		m.growing() //캐릭터 성장
-
+		m.growing()
 		m.bAttackTeamBlack = !m.bAttackTeamBlack //턴 변경
 	}
 
 }
+func (m *RoomInfo) physicsCollisionReviveTeam(bwTeam string) {
+	bwReviveMap := make(map[string]string)
+	//find revive
+	for bwOutName, bwOut := range m.playerMap {
+		if bwOut.bwTeam == bwTeam || bwOut.bLive == false {
+			continue
+		}
+		for bwInName, bwIn := range m.playerMap {
+			if bwIn.bwTeam == bwTeam || bwIn.bLive {
+				continue
+			} else if bwOut == bwIn {
+				continue
+			}
 
-func (m *GameRoomInfo) physicsCollision() {
+			fDistace := math.Sqrt(math.Pow(float64(bwIn.pos.x-bwOut.pos.x), 2) + math.Pow(float64(bwIn.pos.y-bwOut.pos.y), 2))
+			if fDistace > float64(bwOut.nRadius+bwIn.nRadius) { // 거리 조건 스킵
+				continue
+			}
+
+			bwReviveMap[bwOutName] = bwInName
+		}
+	}
+	//revive
+	for bwOutName, bwInName := range bwReviveMap {
+		m.playerMap[bwOutName].reviveCount++
+		m.playerMap[bwInName].bLive = true
+	}
+}
+
+func (m *RoomInfo) physicsCollisionRevive() {
+	m.physicsCollisionReviveTeam("w")
+	m.physicsCollisionReviveTeam("b")
+}
+func (m *RoomInfo) physicsCollisionKill() {
 	for _, p1 := range m.playerMap { //black
 		if p1.bLive == false || p1.bwTeam == "w" {
 			continue
 		}
 		for _, p2 := range m.playerMap { //white
-			if p1 == p2 || p2.bwTeam == "b" || p2.bLive == false {
+			if p2.bLive == false || p2.bwTeam == "b" {
+				continue
+			} else if p1 == p2 {
 				continue
 			}
 
-			fDistace := math.Sqrt(
-				math.Pow(float64(p2.pos.x-p1.pos.x), 2) +
-					math.Pow(float64(p2.pos.y-p1.pos.y), 2))
+			fDistace := math.Sqrt(math.Pow(float64(p2.pos.x-p1.pos.x), 2) + math.Pow(float64(p2.pos.y-p1.pos.y), 2))
 			if fDistace > float64(p1.nRadius+p2.nRadius) { // 거리 조건 스킵
 				continue
 			}
 
 			if m.bAttackTeamBlack {
+				p1.killCount++
 				p2.bLive = false
 			} else {
+				p2.killCount++
 				p1.bLive = false
 			}
 		}
 	}
 }
 
-func (m *GameRoomInfo) physicsMove() {
+func (m *RoomInfo) physicsMove() {
 	for _, playerInfo := range m.playerMap {
 		if playerInfo.bLive == false {
 			continue
@@ -263,7 +305,7 @@ func (m *GameRoomInfo) physicsMove() {
 	}
 }
 
-func (m *GameRoomInfo) playerSpeedInit() {
+func (m *RoomInfo) playerSpeedInit() {
 	for _, playerInfo := range m.playerMap {
 		playerInfo.speed.x = 0
 		playerInfo.speed.y = 0
@@ -271,27 +313,32 @@ func (m *GameRoomInfo) playerSpeedInit() {
 
 }
 
-func (m *GameRoomInfo) playing(nFrame, nPlayingTime int) {
+//게임 진행 및 플레이
+func (m *RoomInfo) playing(nFrame, nPlayingTime int) {
 	loopCnt := nPlayingTime * 1000 / nFrame
 	for i := 0; i < loopCnt; i++ {
 		m.physicsMove()
-		m.physicsCollision()
+		m.physicsCollisionRevive()
+		m.physicsCollisionKill()
 
 		m.broadcastPlaying()
 		time.Sleep(time.Duration(nFrame) * time.Millisecond)
 	}
 	m.playerSpeedInit()
 }
-func (m *GameRoomInfo) growing() {
+
+//캐릭터 성장
+func (m *RoomInfo) growing() {
 	for _, playerInfo := range m.playerMap {
-		if playerInfo.bLive == false {
-			continue
+		if playerInfo.nRadius < 100 {
+			playerInfo.nRadius += 10
 		}
-		playerInfo.nRadius += 10
 	}
 	m.broadcastPlaying()
 }
-func (m *GameRoomInfo) setShotInfo(nFrame, nPlayingTime int) {
+
+//사용자 shot 입력 -> player speed 세팅
+func (m *RoomInfo) setShotInfo(nFrame, nPlayingTime int) {
 	loopCnt := nPlayingTime * 1000 / nFrame
 
 	for _, playerInfo := range m.playerMap {
@@ -314,29 +361,27 @@ func (m *GameRoomInfo) setShotInfo(nFrame, nPlayingTime int) {
 	}
 }
 
-func (m *GameRoomInfo) checkGameOver() bool {
-	bTeam := false
-	wTeam := false
-	nLiveCount := 0
+func (m *RoomInfo) checkGameOver() bool {
+	bLiveBlack := false
+	bLiveWhite := false
 	for _, playerInfo := range m.playerMap {
 		if playerInfo.bLive == false {
 			continue
 		}
-		nLiveCount++
 
 		if playerInfo.bwTeam == "b" {
-			bTeam = true
+			bLiveBlack = true
 		} else {
-			wTeam = true
+			bLiveWhite = true
 		}
 	}
 
-	bGameOver := bTeam == false || wTeam == false
+	bGameOver := bLiveBlack == false || bLiveWhite == false
 	return bGameOver
 }
 
 //CShot is
-func (m *GameRoomInfo) CShot(conID string, msg string) {
+func (m *RoomInfo) CShot(conID string, msg string) {
 	if m.bShotTime == false { //입력 시간 아님.
 		return
 	}
@@ -378,4 +423,48 @@ func recoverPos(nPos *int) {
 	} else if *nPos > 1000 {
 		*nPos = 1000
 	}
+}
+
+//NewRoomInfo is
+func NewRoomInfo(socketioServer *socketio.Server, nsp string, nRoomCapacity int) *RoomInfo {
+	const rowCount = 3
+	const colCount = 3
+	const maxPosCount = rowCount * colCount //보드 확장 가능성
+
+	gameRoomName := uuid.New().String()
+	if gameRoomName == "" {
+		log.Println("[Check uuid.New()]")
+		gameRoomName = uuid.New().String()
+	}
+
+	gameRoom := &RoomInfo{
+		socketioServer:   socketioServer,
+		nsp:              nsp,
+		gameRoomName:     gameRoomName,
+		isStarted:        false,
+		roomCapacity:     nRoomCapacity,
+		randPos:          make([]xy, maxPosCount, maxPosCount),
+		playerMap:        make(map[string]*playerInfo),
+		bShotTime:        false,
+		bAttackTeamBlack: true,
+	}
+
+	//tucker random
+	for i := 0; i < rowCount; i++ {
+		for j := 0; j < colCount; j++ {
+			gameRoom.randPos[i*rowCount+j].x = 150 + i*350
+			gameRoom.randPos[i*rowCount+j].y = 150 + j*350
+		}
+	}
+
+	nSeed := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(nSeed)
+	for i := 0; i < maxPosCount; i++ {
+		n1 := r.Intn(maxPosCount)
+		n2 := r.Intn(maxPosCount)
+		gameRoom.randPos[n1], gameRoom.randPos[n2] = gameRoom.randPos[n2], gameRoom.randPos[n1]
+	}
+	//tucker random
+
+	return gameRoom
 }

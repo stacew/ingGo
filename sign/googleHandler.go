@@ -15,8 +15,8 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-//GoogleUserID is
-type GoogleUserID struct {
+//googleUserID is
+type googleUserID struct {
 	ID            string `json:"id"`
 	Email         string `json:"email"`
 	VerifiedEmail bool   `josn:"verified_email"`
@@ -69,7 +69,7 @@ func googleOauthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Store ID info into Session cookie
-	var userInfo GoogleUserID
+	var userInfo googleUserID
 	err = json.Unmarshal(data, &userInfo)
 	if err != nil {
 		log.Println(err.Error())
