@@ -3,10 +3,10 @@ package myapp
 import (
 	"log"
 	"net/http"
-	"stacew/teamgoing/cipher"
-	dm "stacew/teamgoing/dataModel"
-	"stacew/teamgoing/sign"
-	socketserver "stacew/teamgoing/socketServer"
+	"stacew/teamgo/cipher"
+	dm "stacew/teamgo/dataModel"
+	"stacew/teamgo/sign"
+	socketserver "stacew/teamgo/socketServer"
 	"strconv"
 
 	socketio "github.com/googollee/go-socket.io"

@@ -2,7 +2,7 @@ package socketserver
 
 import (
 	"errors"
-	gameserver "stacew/teamgoing/gameServer"
+	gameserver "stacew/teamgo/gameServer"
 	"sync"
 
 	"log"

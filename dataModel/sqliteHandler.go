@@ -3,7 +3,7 @@ package dm
 import (
 	"database/sql"
 	"log"
-	"stacew/teamgoing/sign"
+	"stacew/teamgo/sign"
 
 	_ "github.com/mattn/go-sqlite3" //위의 sql에 대한 go-sqlite3를 사용한다는 암시적 의미로 추가
 )

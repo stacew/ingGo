@@ -1,6 +1,6 @@
 package dm
 
-import "stacew/teamgoing/sign"
+import "stacew/teamgo/sign"
 
 //UserInfo is
 type UserInfo struct {

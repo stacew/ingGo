@@ -1,1 +1,1 @@
-web: bin/teamgoing
+web: bin/teamgo

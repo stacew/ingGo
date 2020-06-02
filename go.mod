@@ -1,4 +1,4 @@
-module stacew/teamgoing
+module stacew/teamgo
 
 go 1.14
 

@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
-	myapp "stacew/teamgoing/myApp"
-	"stacew/teamgoing/port"
+	myapp "stacew/teamgo/myApp"
+	"stacew/teamgo/port"
 )
 
 func main() {

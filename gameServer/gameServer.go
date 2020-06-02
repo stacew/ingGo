@@ -2,7 +2,7 @@ package gameserver
 
 import (
 	"errors"
-	gameroom "stacew/teamgoing/gameRoom"
+	gameroom "stacew/teamgo/gameRoom"
 	"sync"
 
 	socketio "github.com/googollee/go-socket.io"
