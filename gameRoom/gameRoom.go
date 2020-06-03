@@ -39,9 +39,13 @@ type playerInfo struct {
 	speed   xyfloat64
 	nRadius int
 
-	nRating     int
+	gameUserID int
+	nRating    int
+
+	liveTurn    int
 	killCount   int
 	reviveCount int
+	fPoint      float64
 }
 
 //RoomInfo is
@@ -59,8 +63,8 @@ type RoomInfo struct {
 	bAttackTeamBlack bool
 
 	turnCount    int
-	averageBlack int
-	averageWhite int
+	averageBlack float64
+	averageWhite float64
 }
 
 //GetPlayerCount is
@@ -70,7 +74,9 @@ func (m *RoomInfo) GetPlayerCount() int {
 
 //Join is
 func (m *RoomInfo) Join(conID string) string {
-	m.playerMap[conID] = &playerInfo{nRating: 10000000} //todo: 유저 레이팅 처리 필요
+	m.playerMap[conID] = &playerInfo{
+		nRating:    10000000, //todo: 유저 레이팅 처리 필요
+		gameUserID: 12313213} //todo: 유저 아이디 필요
 	return m.gameRoomName
 }
 
@@ -87,6 +93,8 @@ func (m *RoomInfo) startUp() {
 	m.isStarted = true
 
 	i := 0
+	blackRating := 0
+	whiteRating := 0
 	for _, player := range m.playerMap {
 		player.pos.x = float64(m.randPos[i].x)
 		player.pos.y = float64(m.randPos[i].y)
@@ -94,21 +102,23 @@ func (m *RoomInfo) startUp() {
 		i++
 		if i%2 == 0 {
 			player.bwTeam = "b"
-			m.averageBlack += player.nRating
+			blackRating += player.nRating
 		} else {
 			player.bwTeam = "w"
-			m.averageWhite += player.nRating
+			whiteRating += player.nRating
 		}
 
 		player.bLive = true
 		player.shot.bSettedShot = false
 		player.reviveCount = 0
 		player.killCount = 0
+		player.liveTurn = 1 // warn div 0
+		player.fPoint = 0
 	}
 
-	m.averageBlack /= (m.roomCapacity / 2)
-	m.averageWhite /= (m.roomCapacity / 2)
-	m.turnCount = 0
+	m.averageBlack = float64(blackRating / (m.roomCapacity / 2))
+	m.averageWhite = float64(whiteRating / (m.roomCapacity / 2))
+	m.turnCount = 1 // warn div 0
 }
 
 /////////////////////////////////////////////
@@ -177,24 +187,66 @@ func (m *RoomInfo) broadcastOver() {
 }
 
 /////////////////////////////////////////////
+func (m *RoomInfo) calcPoint(bwTeam string, bWin bool) {
+	teamTotal := float64(10 * m.roomCapacity / 2)
+
+	diffAverage := 0.0
+	if bwTeam == "b" {
+		diffAverage = m.averageWhite - m.averageBlack
+	} else {
+		diffAverage = m.averageBlack - m.averageBlack
+	}
+
+	if bWin && diffAverage > 0 {
+		teamTotal += diffAverage
+	} else if bWin == false && diffAverage < 0 {
+		teamTotal += diffAverage
+	}
+
+	totalKill := 0
+	totalRevive := 0
+	totalContribute := 0.0
+	for _, p := range m.playerMap {
+		if p.bwTeam != bwTeam {
+			continue
+		}
+		totalKill += p.killCount
+		totalRevive += p.reviveCount
+		p.fPoint = float64((p.killCount + p.reviveCount + 1) / p.liveTurn)
+		totalContribute += p.fPoint
+	}
+
+	for _, p := range m.playerMap {
+		if p.bwTeam != bwTeam {
+			continue
+		}
+
+		fUserContribute := p.fPoint / totalContribute
+		p.fPoint = teamTotal * fUserContribute
+		if bWin == false {
+			p.fPoint = -p.fPoint
+		}
+	}
+}
+
 func (m *RoomInfo) gameOverProcess() {
-	bLiveBlack := false
-	bLiveWhite := false
 	for _, playerInfo := range m.playerMap {
 		if playerInfo.bLive == false {
 			continue
 		}
 
 		if playerInfo.bwTeam == "b" {
-			bLiveBlack = true
+			m.calcPoint("b", true)
+			m.calcPoint("w", false)
+			break
 		} else {
-			bLiveWhite = true
+			m.calcPoint("b", true)
+			m.calcPoint("w", false)
+			break
 		}
 	}
 
 	//todo
-	//m.averageBlack
-	//m.averageWhite
 	//m.broadcastOver()
 }
 
@@ -228,7 +280,7 @@ func (m *RoomInfo) Start() {
 		m.setShotInfo(nFrame, nPlayingTime)
 		m.playing(nFrame, nPlayingTime)
 
-		m.growing()
+		m.growingAndLiveTurn()
 		m.bAttackTeamBlack = !m.bAttackTeamBlack //턴 변경
 	}
 
@@ -328,8 +380,12 @@ func (m *RoomInfo) playing(nFrame, nPlayingTime int) {
 }
 
 //캐릭터 성장
-func (m *RoomInfo) growing() {
+func (m *RoomInfo) growingAndLiveTurn() {
 	for _, playerInfo := range m.playerMap {
+		if playerInfo.bLive {
+			playerInfo.liveTurn++
+		}
+
 		if playerInfo.nRadius < 100 {
 			playerInfo.nRadius += 10
 		}
