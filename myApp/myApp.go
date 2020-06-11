@@ -23,6 +23,7 @@ type AppHandler struct {
 
 func (m *AppHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
 
+	cookie...
 	encryptplatformID := w.Header().Get(sign.ConstPlatformID)
 	platformType := w.Header().Get(sign.ConstPlatformType)
 	if encryptplatformID != "" && platformType != "" {
@@ -30,16 +31,9 @@ func (m *AppHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
 		signPlatformType, _ := strconv.Atoi(platformType)
 		userInfo := m.dmHandler.GetAndAddUserInfo(sign.PlatformType(signPlatformType), platformID)
 		log.Println(userInfo.Name)
-		log.Println(userInfo.Name)
-		log.Println(userInfo.Name)
 	}
 
 	http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
-}
-func (m *AppHandler) signHandler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/sign/sign.html", http.StatusTemporaryRedirect)
-
-	//add user 언제 함?
 }
 
 //Close is
@@ -64,7 +58,7 @@ func MakeNewHandler(dbConn string) *AppHandler {
 	neg := negroni.New(
 		negroni.NewRecovery(),
 		negroni.NewLogger(),
-		negroni.HandlerFunc(sign.CheckSign),
+		// negroni.HandlerFunc(sign.CheckSign), 필요 없어짐... request header cookie 정보 이용하도록..
 		negroni.NewStatic(http.Dir("a0001"))) //패치 후, 폴더 이름 변경
 	// -----------------
 	appHandler := &AppHandler{
@@ -77,14 +71,12 @@ func MakeNewHandler(dbConn string) *AppHandler {
 	neg.UseHandler(mux)
 	// -----------------
 	mux.Add("GET", "/socket.io/", socketioServer)
-	// 다른 웹 프레임 워크 예제에 post도 등록하던데 지금 여기서는 의미를 모르겠음
-	//mux.Add("POST", "/socket.io/", socketioServer)
+	//mux.Add("POST", "/socket.io/", socketioServer)//iris? gin 프레임 워크 예제에 post도 등록하던데 지금 여기서는 의미를 모르겠음
 	// -----------------
 	sign.SetHandle(mux)
 	// -----------------
-	mux.Get("/sign", appHandler.signHandler)
+	//...expand...
 	mux.Get("/", appHandler.indexHandler)
-	//...expand
 	// -----------------
 	return appHandler
 }

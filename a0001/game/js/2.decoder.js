@@ -27,6 +27,7 @@ function fMsgDecoder(msg) {
             case "s":
                 zbPlaying = true;
                 zbLive = true;
+                znR = 20;
                 nFindIndex = nFindIndex + 2;
                 break;
             case "t":
@@ -36,7 +37,8 @@ function fMsgDecoder(msg) {
                 //nFindIndex = fGameOver(msg, nFindIndex + 1);
                 break;
             default:
-                console.log(charType); //decoder infinite loop checker
+                console.log("Decoder Check : ", charType);
+                nFindIndex = nFindIndex + 1;
                 break;
         }
     }

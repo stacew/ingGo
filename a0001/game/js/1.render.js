@@ -2,8 +2,8 @@ function fClearCanvas() {
     msgCtx.clearRect(0, 0, zCanvasWH, zCanvasWH);
     fgCtx.clearRect(0, 0, zCanvasWH, zCanvasWH);
 }
-function fDrawPlayer(img, x, y, nRadius) {
-    fgCtx.drawImage(img, x - nRadius, y - nRadius, nRadius * 2, nRadius * 2);
+function fDrawPlayer(anyCtx, img, x, y, nRadius) {
+    anyCtx.drawImage(img, x - nRadius, y - nRadius, nRadius * 2, nRadius * 2);
 }
 function fDrawCircle(anyCtx, x, y, r, color, style = []) {
     anyCtx.beginPath();
@@ -42,8 +42,8 @@ function fDrawAnim() {
     zDashOffset--;
     animCtx.lineDashOffset = zDashOffset;
     if (zbPlaying) {
-        fDrawCircle(animCtx, znMyX, znMyY, znMyR + 10, "gray", zDashList);
-        if (zbLive) {
+        fDrawCircle(animCtx, znMyX, znMyY, znR + 10, "gray", zDashList);
+        if (zbShotChance) {
             fDrawArrowLine(animCtx, znMyX, znMyY, znShotX, znShotY, "gray");
         }
     }
@@ -65,6 +65,9 @@ function fOneshotStartEnd(msg, nFindIndex) {
     let charSE = multi[0];
 
     if (charSE == 's') {
+        if (znR < 100)
+            znR += 10;
+
         audioTurn.play();
         zbShotChance = zbLive ? true : false;
     }
@@ -86,23 +89,25 @@ function fPlaying(msg, nFindIndex) {
     let strCID = multi[0]; multi = msgToken([msg, multi[1]]);
     let nX = parseInt(multi[0]); multi = msgToken([msg, multi[1]]);
     let nY = parseInt(multi[0]); multi = msgToken([msg, multi[1]]);
-    let nR = parseInt(multi[0]); multi = msgToken([msg, multi[1]]);
+    // let nR = parseInt(multi[0]); multi = msgToken([msg, multi[1]]);
     let charLive = multi[0]; multi = msgToken([msg, multi[1]]);
-    let charBlack = multi[0];
+    let charTeam = multi[0];
 
     let bLive = (charLive == 'l');
     if (strCID == zio.io.engine.id) {
-        znMyX = nX; znMyY = nY; znMyR = nR;
-        znShotX = nX; znShotY = nY;
+        znMyX = nX; znMyY = nY;
+        // znShotX = nX; znShotY = nY;
         zbLive = bLive;
     }
 
-    if (charBlack == 'b') {
-        fDrawPlayer(bLive ? imgBlack : imgBlackDie, nX, nY, nR);
-        if (bLive && zbAttackTeamBlack) fDrawCircle(fgCtx, nX, nY, nR, "red");
+    if (charTeam == 'b') {
+        fDrawPlayer(bLive ? fgCtx : bgCtx, bLive ? imgBlack : imgBlackDie, nX, nY, znR);
+        if (bLive && zbAttackTeamBlack)
+            fDrawCircle(fgCtx, nX, nY, znR + 1, "red");
     } else {
-        fDrawPlayer(bLive ? imgWhite : imgWhiteDie, nX, nY, nR);
-        if (bLive && zbAttackTeamBlack == false) fDrawCircle(fgCtx, nX, nY, nR, "red");
+        fDrawPlayer(bLive ? fgCtx : bgCtx, bLive ? imgWhite : imgWhiteDie, nX, nY, znR);
+        if (bLive && zbAttackTeamBlack == false)
+            fDrawCircle(fgCtx, nX, nY, znR + 1, "red");
     }
     return multi[1];
 }

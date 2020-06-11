@@ -34,8 +34,8 @@ var googleOauthConfig = oauth2.Config{
 	// RedirectURL:  os.Getenv("DOMAIN_NAME") + authGoogleCallbackURL,
 	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 	ClientSecret: os.Getenv("GOOGLE_SECRET_KEY"),
-	//요청 정보?
-	Scopes:   []string{"https://www.googleapis.com/auth/userinfo.email"},
+	//요청 정보
+	Scopes:   []string{"https://www.googleapis.com/auth/userinfo.profile"},
 	Endpoint: google.Endpoint,
 }
 
@@ -77,7 +77,7 @@ func googleOauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, _ := cookieStore.Get(r, constSession)
+	session, _ := cookieStore.Get(r, strSession)
 	session.Values[ConstPlatformID] = userInfo.ID //key value 다른 정보 저장해도 됨.
 	session.Values[ConstPlatformType] = strconv.Itoa(int(Google))
 

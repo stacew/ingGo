@@ -16,36 +16,38 @@ const audioTurn = new Audio("/game/asset/turn.mp3");
 const audioTong = new Audio("/game/asset/tong.mp3");
 
 const zCanvasWH = 1000;
+const baseCanvas = document.getElementById("baseCanvas");
 const bgCanvas = document.getElementById("bgCanvas");
 const msgCanvas = document.getElementById("msgCanvas");
 const fgCanvas = document.getElementById("fgCanvas");
 const animCanvas = document.getElementById("animCanvas");
+const baseCtx = baseCanvas.getContext("2d");
 const bgCtx = bgCanvas.getContext("2d");
 const msgCtx = msgCanvas.getContext("2d");
 const fgCtx = fgCanvas.getContext("2d");
 const animCtx = animCanvas.getContext("2d");
 function fDrawBoard() {
-    bgCtx.fillStyle = "burlywood";
-    bgCtx.fillRect(0, 0, zCanvasWH, zCanvasWH);
+    baseCtx.fillStyle = "burlywood";
+    baseCtx.fillRect(0, 0, zCanvasWH, zCanvasWH);
     let nWidthBand = zCanvasWH / 20;
     let nHeightBand = zCanvasWH / 20;
 
-    bgCtx.strokeStyle = "black";
-    bgCtx.lineWidth = 1;
+    baseCtx.strokeStyle = "black";
+    baseCtx.lineWidth = 1;
     for (let i = 1; i < 20; i++) {
-        bgCtx.strokeRect(nWidthBand * i, 0, 0, zCanvasWH);
-        bgCtx.strokeRect(0, nHeightBand * i, zCanvasWH, 0);
+        baseCtx.strokeRect(nWidthBand * i, 0, 0, zCanvasWH);
+        baseCtx.strokeRect(0, nHeightBand * i, zCanvasWH, 0);
     }
 
-    bgCtx.fillStyle = "black";
+    baseCtx.fillStyle = "black";
     for (let i = 0; i < 3; i++) {
         let x = nWidthBand * 3 + i * (nWidthBand * 7);
         for (let j = 0; j < 3; j++) {
-            bgCtx.beginPath();
+            baseCtx.beginPath();
             let y = nHeightBand * 3 + j * (nHeightBand * 7);
-            bgCtx.arc(x, y, 5, 0, Math.PI * 2);
-            bgCtx.fill();
-            bgCtx.closePath();
+            baseCtx.arc(x, y, 5, 0, Math.PI * 2);
+            baseCtx.fill();
+            baseCtx.closePath();
         }
     }
 }
@@ -68,6 +70,6 @@ let zbLive = false;
 let zbShotChance = false;
 let znMyX = 0;
 let znMyY = 0;
-let znMyR = 0;
+let znR = 0;
 let znShotX = 0;
 let znShotY = 0;

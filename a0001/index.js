@@ -1,0 +1,10 @@
+const top1Btn = document.getElementById("top1");
+const top2Btn = document.getElementById("top2");
+const top3Btn = document.getElementById("top3");
+const bot1Btn = document.getElementById("bot1");
+const bot2Btn = document.getElementById("bot2");
+const bot3Btn = document.getElementById("bot3");
+top1Btn.value = "LogOut";
+top3Btn.value = "LogOut";
+top3Btn.value = 'my value'; // will just add a hidden value
+top3Btn.innerHTML = 'my text';

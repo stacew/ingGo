@@ -41,7 +41,7 @@ func (m *socketServerInfo) Undevelop() {
 
 func (m *socketServerInfo) makeCustomSocket(socketioServer *socketio.Server, gameServer *gameserver.MyGameServer) {
 	socketioServer.OnEvent(m.nsp, "cShot", func(c socketio.Conn, msg string) {
-		gameServer.CShot(c.ID(), msg)
+		gameServer.ClientShot(c.ID(), msg)
 	})
 
 	// socketioServer.OnEvent(m.nsp, "cReqMsg", func(s socketio.Conn) string {
@@ -57,14 +57,12 @@ func (m *socketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameS
 			return
 		}
 
-		roomName, err := gameServer.CJoin(c.ID())
+		roomName, err := gameServer.ClientJoin(c.ID())
 		if err != nil {
 			log.Println("[Check Error] Join")
 			return
 		}
 
-		m.mutex.Lock()
-		defer m.mutex.Unlock()
 		c.Join(roomName)
 		gameServer.BroadCastJoinAndStart(c.ID())
 	})
@@ -74,7 +72,7 @@ func (m *socketServerInfo) makeRoomSocket(socketioServer *socketio.Server, gameS
 			log.Println("[ConnNil] cLeave")
 		}
 
-		gameRoomName, bExist := gameServer.CLeave(c.ID())
+		gameRoomName, bExist := gameServer.ClientLeave(c.ID())
 		if bExist {
 			c.Leave(gameRoomName) //
 		}
@@ -90,6 +88,8 @@ func (m *socketServerInfo) makeBaseSocket(socketioServer *socketio.Server, gameS
 
 		log.Println("OnConnect", c.ID())
 
+		m.mutex.Lock()
+		defer m.mutex.Unlock()
 		m.conCount++
 		m.currentCon++
 		return nil
@@ -113,12 +113,13 @@ func (m *socketServerInfo) makeBaseSocket(socketioServer *socketio.Server, gameS
 			return
 		}
 
-		gameRoomName, bExist := gameServer.CLeave(c.ID())
+		gameRoomName, bExist := gameServer.ClientLeave(c.ID())
 		if bExist {
-			m.mutex.Lock()
-			defer m.mutex.Unlock()
 			c.Leave(gameRoomName) //
 		}
+
+		m.mutex.Lock()
+		defer m.mutex.Unlock()
 		m.currentCon--
 	})
 }

@@ -3,40 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeamGo.io</title>
-    <link rel="stylesheet" href="/css/index.css">
-    <link rel="stylesheet" href="/css/canvas.css">
+    <title>ingGo.io</title>
+    <link rel="stylesheet" href="/index.css">
 </head>
 
 <body>
-    <div class="topWrapper">
-        <button class="top" id="top1">top1</button>
-        <button class="top" id="top2">top2</button>
-        <button class="top" id="top3">top3</button>
-    </div>
+    <div class="center">
+        <div class="topWrapper">
+            <button class="topBtnClass" id="top1">top1</button>
+            <button class="topBtnClass" id="top2">top2</button>
+            <button class="topBtnClass" id="top3" onclick="window.location.href='/auth/google/login'; return false;"
+                type="submit">google login</button>
+        </div>
 
-    <div class="centerWrapper">
-        <canvas class="canvasClass" id="bgCanvas" width="1000" height="1000"></canvas>
-        <canvas class="canvasClass" id="msgCanvas" width="1000" height="1000"></canvas>
-        <canvas class="canvasClass" id="fgCanvas" width="1000" height="1000"></canvas>
-        <canvas class="canvasClass" id="animCanvas" width="1000" height="1000"></canvas>
-        <canvas class="canvasClass" id="menuCanvas" width="1000" height="1000"></canvas>
-        <button class="btnClass" id="connectBtn">Connect Server</button>
-        <button class="btnClass" id="joinBtn">Join</button>
-        <button class="btnClass" id="leaveBtn">Leave</button>
+        <div class="midWrapper">
+            <canvas class="canvasClass" id="baseCanvas" width="1000" height="1000"></canvas>
+            <canvas class="canvasClass" id="bgCanvas" width="1000" height="1000"></canvas>
+            <canvas class="canvasClass" id="msgCanvas" width="1000" height="1000"></canvas>
+            <canvas class="canvasClass" id="fgCanvas" width="1000" height="1000"></canvas>
+            <canvas class="canvasClass" id="animCanvas" width="1000" height="1000"></canvas>
+            <button class="midBtnClass" id="connectBtn">Connect Server</button>
+            <button class="midBtnClass" id="joinBtn">Join</button>
+            <button class="midBtnClass" id="leaveBtn">Leave</button>
+        </div>
+
+        <div class="botWrapper">
+            <button class="botBtnClass" id="bottom1">bottom1</button>
+            <button class="botBtnClass" id="bottom2">bottom2</button>
+            <button class="botBtnClass" id="bottom3">bottom3</button>
+        </div>
     </div>
+    <script src="/index.js"></script>
 
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="/game/js/0.base.js"></script>
     <script src="/game/js/1.render.js"></script>
     <script src="/game/js/2.decoder.js"></script>
     <script src="/game/js/3.socket.js"></script>
-
-    <div class="bottomWrapper">
-        <button class="bottom" id="bottom1">bottom1</button>
-        <button class="bottom" id="bottom2">bottom2</button>
-        <button class="bottom" id="bottom3">bottom3</button>
-    </div>
 </body>
 
 </html>

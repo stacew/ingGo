@@ -8,10 +8,18 @@ import (
 	"encoding/hex"
 	"io"
 	"log"
-	"os"
+
+	"github.com/google/uuid"
 )
 
-const strEnvServerKey = "SERVER_KEY"
+var aesKey string
+
+func init() {
+	aesKey = uuid.New().String()
+	if aesKey == "" {
+		log.Fatal("[Check uuid.New()]")
+	}
+}
 
 func createHash(key string) string {
 	hasher := md5.New()
@@ -21,7 +29,7 @@ func createHash(key string) string {
 
 // Encrypt is
 func Encrypt(data string) string {
-	block, err := aes.NewCipher([]byte(createHash(os.Getenv(strEnvServerKey))))
+	block, err := aes.NewCipher([]byte(createHash(aesKey)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,7 +48,7 @@ func Encrypt(data string) string {
 
 // Decrypt is
 func Decrypt(data string) string {
-	key := []byte(createHash(os.Getenv(strEnvServerKey)))
+	key := []byte(createHash(aesKey))
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)

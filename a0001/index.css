@@ -1,0 +1,65 @@
+body{background-color:rgb(50, 50, 50);}
+.center{
+    display: flex;
+    justify-content:center;
+}
+.topWrapper, .botWrapper{
+    position: fixed;
+    width: 80%;
+
+    display: flex;
+    justify-content: space-between;
+
+    font-weight: bold;
+    font-size: 1vmin;
+    padding: 1vmin;
+    background-color: darkgray;
+}
+.topWrapper{top: 0%;}
+.botWrapper{bottom: 0%;}
+.midWrapper{
+    display: flex;
+    justify-content: center;    
+}
+/* /////////// */
+.canvasClass, .midBtnClass{
+    position: fixed;
+    top:50%;
+    transform: translateY(-50%);
+}
+.canvasClass{
+    border-radius: 2vmin;
+    height: 80vmin;
+    width: 80vmin;
+}
+#baseCanvas{z-index: 1; background-color:burlywood;}
+#bgCanvas{z-index: 2;}
+#msgCanvas{z-index: 3;}
+#fgCanvas{z-index: 4;}
+#animCanvas{z-index: 5;}
+.midBtnClass{
+    z-index: 10;
+    animation: float 1s ease-in infinite;  
+    animation-delay: 0.5s;   
+}
+@keyframes float{
+    0%{     transform: translateY(-50%);}
+    50%{    transform: translateY(-45%);}
+    100%{   transform: translateY(-50%);}
+}
+/* /////////////////// */
+.topBtnClass, .botBtnClass{
+    font-size: 3vmin;
+}
+.midBtnClass{
+  outline: none;
+  border-radius: 3vmin;
+  padding: 2vmin 2vmin;
+  font-size: 6vmin;
+}
+#joinBtn{
+    display: none;
+}
+#leaveBtn{
+    display: none;
+}

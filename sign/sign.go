@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"net/http"
 	"os"
-	"stacew/teamgo/cipher"
-	"strings"
 	"time"
 
 	"github.com/gorilla/pat"
@@ -14,6 +12,7 @@ import (
 )
 
 const (
+	strSession    = "session"
 	strOAuthState = "oauthstate"
 )
 
@@ -23,7 +22,6 @@ const strEnvSessionKey = "SESSION_KEY"
 var cookieStore = sessions.NewCookieStore([]byte(os.Getenv(strEnvSessionKey)))
 
 const (
-	constSession = "session"
 	//ConstPlatformID is
 	ConstPlatformID = "platformID"
 	//ConstPlatformType is
@@ -42,36 +40,6 @@ const (
 	None
 )
 
-//SetHandle is
-func SetHandle(mux *pat.Router) {
-	setGoogleHandle(mux)
-}
-
-//CheckSign is
-func CheckSign(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	fGetSession := func(r *http.Request) (string, string) {
-		session, _ := cookieStore.Get(r, constSession)
-		platformID := session.Values[ConstPlatformID]
-		platformType := session.Values[ConstPlatformType]
-		if platformID == nil || platformType == nil {
-			return "", ""
-		}
-		return platformID.(string), platformType.(string)
-	}
-
-	platformID, platformType := fGetSession(r)
-	if platformID != "" && platformType != "" {
-		w.Header().Add(ConstPlatformID, cipher.Encrypt(platformID))
-		w.Header().Add(ConstPlatformType, platformType)
-
-		if strings.Contains(r.URL.Path, "/sign") || strings.Contains(r.URL.Path, "/auth") {
-			http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
-		}
-	}
-
-	next(w, r)
-}
-
 func generateStateOauthCookie(w http.ResponseWriter) string {
 	b := make([]byte, 16)
 	rand.Read(b)
@@ -82,3 +50,32 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	http.SetCookie(w, cookie)
 	return state
 }
+
+//SetHandle is
+func SetHandle(mux *pat.Router) {
+	setGoogleHandle(mux)
+}
+
+// //CheckSign is
+// func CheckSign(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+// 	//fGetSession
+// 	fGetSession := func(r *http.Request) (string, string) {
+// 		session, _ := cookieStore.Get(r, constSession)
+// 		platformID := session.Values[ConstPlatformID]
+// 		platformType := session.Values[ConstPlatformType]
+// 		if platformID == nil || platformType == nil {
+// 			return "", ""
+// 		}
+// 		return platformID.(string), platformType.(string)
+// 	}
+
+// 	platformID, platformType := fGetSession(r)
+// 	if platformID != "" && platformType != "" {
+// 		// if strings.Contains(r.URL.Path, "/sign") || strings.Contains(r.URL.Path, "/auth") {
+// 		if strings.Contains(r.URL.Path, "/auth") {
+// 			http.Redirect(w, r, "/index.html", http.StatusTemporaryRedirect)
+// 		}
+// 	}
+
+// 	next(w, r)
+// }
